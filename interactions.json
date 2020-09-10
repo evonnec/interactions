@@ -1,0 +1,1218 @@
+[
+  {
+    "drugs": [
+      "sildenafil",
+      "tamsulosin"
+    ],
+    "severity": "moderate",
+    "description": "Sildenafil may potentiate the hypotensive effect of alpha blockers, resulting in symptomatic hypotension in some patients."
+  },
+  {
+    "drugs": [
+      "sildenafil",
+      "nitroglycerin"
+    ],
+    "severity": "major",
+    "description": "Phosphodiesterase-5 (PDE5) inhibitors may potentiate the hypotensive effect of organic nitrates."
+  },
+  {
+    "drugs": [
+      "sildenafil",
+      "nicotine"
+    ],
+    "severity": "minor",
+    "description": "The metabolism of Sildenafil can be decreased when combined with Nicotine."
+  },
+  {
+    "drugs": [
+      "sildenafil",
+      "lovastatin"
+    ],
+    "severity": "major",
+    "description": "The metabolism of Sildenafil can be decreased when combined with Lovastatin."
+  },
+  {
+    "drugs": [
+      "sildenafil",
+      "enflurane"
+    ],
+    "severity": "moderate",
+    "description": "The metabolism of Enflurane can be decreased when combined with Sildenafil."
+  },
+  {
+    "drugs": [
+      "sildenafil",
+      "rescinnamine"
+    ],
+    "severity": "moderate",
+    "description": "Sildenafil may increase the antihypertensive activities of Rescinnamine."
+  },
+  {
+    "drugs": [
+      "sildenafil",
+      "enalaprilat"
+    ],
+    "severity": "moderate",
+    "description": "Sildenafil may increase the antihypertensive activities of Enalaprilat."
+  },
+  {
+    "drugs": [
+      "sildenafil",
+      "nicardipine"
+    ],
+    "severity": "moderate",
+    "description": "The metabolism of Sildenafil can be decreased when combined with Nicardipine."
+  },
+  {
+    "drugs": [
+      "sildenafil",
+      "echinacea"
+    ],
+    "severity": "major",
+    "description": "The metabolism of Sildenafil can be increased when combined with Echinacea."
+  },
+  {
+    "drugs": [
+      "sildenafil",
+      "norethisterone"
+    ],
+    "severity": "major",
+    "description": "The metabolism of Sildenafil can be decreased when combined with Norethisterone."
+  },
+  {
+    "drugs": [
+      "sildenafil",
+      "meloxicam"
+    ],
+    "severity": "minor",
+    "description": "The metabolism of Meloxicam can be decreased when combined with Sildenafil."
+  },
+  {
+    "drugs": [
+      "sildenafil",
+      "thiamylal"
+    ],
+    "severity": "major",
+    "description": "The metabolism of Sildenafil can be increased when combined with Thiamylal."
+  },
+  {
+    "drugs": [
+      "sildenafil",
+      "benzylpenicillin"
+    ],
+    "severity": "minor",
+    "description": "The excretion of Benzylpenicillin can be decreased when combined with Sildenafil."
+  },
+  {
+    "drugs": [
+      "sildenafil",
+      "guanoxan"
+    ],
+    "severity": "moderate",
+    "description": "Sildenafil may increase the antihypertensive activities of Guanoxan."
+  },
+  {
+    "drugs": [
+      "sildenafil",
+      "grepafloxacin"
+    ],
+    "severity": "moderate",
+    "description": "The serum concentration of Sildenafil can be increased when it is combined with Grepafloxacin."
+  },
+  {
+    "drugs": [
+      "sildenafil",
+      "lofexidine"
+    ],
+    "severity": "moderate",
+    "description": "Sildenafil may increase the antihypertensive activities of Lofexidine."
+  },
+  {
+    "drugs": [
+      "sildenafil",
+      "guanoclor"
+    ],
+    "severity": "moderate",
+    "description": "Sildenafil may increase the antihypertensive activities of Guanoclor."
+  },
+  {
+    "drugs": [
+      "sildenafil",
+      "norgestimate"
+    ],
+    "severity": "major",
+    "description": "The metabolism of Sildenafil can be increased when combined with Norgestimate."
+  },
+  {
+    "drugs": [
+      "sildenafil",
+      "cyclopenthiazide"
+    ],
+    "severity": "moderate",
+    "description": "Sildenafil may increase the antihypertensive activities of Cyclopenthiazide."
+  },
+  {
+    "drugs": [
+      "sildenafil",
+      "acepromazine"
+    ],
+    "severity": "moderate",
+    "description": "The risk or severity of hypotension, dyspepsia, and headache can be increased when Sildenafil is combined with Acepromazine."
+  },
+  {
+    "drugs": [
+      "sildenafil",
+      "grapiprant"
+    ],
+    "severity": "moderate",
+    "description": "The serum concentration of Grapiprant can be increased when it is combined with Sildenafil."
+  },
+  {
+    "drugs": [
+      "sildenafil",
+      "zolpidem"
+    ],
+    "severity": "moderate",
+    "description": "The metabolism of Zolpidem can be decreased when combined with Sildenafil."
+  },
+  {
+    "drugs": [
+      "sildenafil",
+      "edoxaban"
+    ],
+    "severity": "moderate",
+    "description": "The serum concentration of Edoxaban can be increased when it is combined with Sildenafil."
+  },
+  {
+    "drugs": [
+      "sildenafil",
+      "telmisartan"
+    ],
+    "severity": "moderate",
+    "description": "Sildenafil may increase the antihypertensive activities of Telmisartan."
+  },
+  {
+    "drugs": [
+      "sildenafil",
+      "tasimelteon"
+    ],
+    "severity": "major",
+    "description": "The metabolism of Sildenafil can be decreased when combined with Tasimelteon."
+  },
+  {
+    "drugs": [
+      "sildenafil",
+      "temocapril"
+    ],
+    "severity": "moderate",
+    "description": "Sildenafil may increase the antihypertensive activities of Temocapril."
+  },
+  {
+    "drugs": [
+      "sildenafil",
+      "daclatasvir"
+    ],
+    "severity": "moderate",
+    "description": "The serum concentration of Sildenafil can be increased when it is combined with Daclatasvir."
+  },
+  {
+    "drugs": [
+      "sildenafil",
+      "thalidomide"
+    ],
+    "severity": "moderate",
+    "description": "The metabolism of Sildenafil can be increased when combined with Thalidomide."
+  },
+  {
+    "drugs": [
+      "sildenafil",
+      "hydrocortamate"
+    ],
+    "severity": "major",
+    "description": "The metabolism of Sildenafil can be increased when combined with Hydrocortamate."
+  },
+  {
+    "drugs": [
+      "sildenafil",
+      "zopiclone"
+    ],
+    "severity": "minor",
+    "description": "The metabolism of Zopiclone can be decreased when combined with Sildenafil."
+  },
+  {
+    "drugs": [
+      "sildenafil",
+      "promazine"
+    ],
+    "severity": "minor",
+    "description": "The metabolism of Promazine can be decreased when combined with Sildenafil."
+  },
+  {
+    "drugs": [
+      "sildenafil",
+      "clobazam"
+    ],
+    "severity": "moderate",
+    "description": "The metabolism of Sildenafil can be decreased when combined with Clobazam."
+  },
+  {
+    "drugs": [
+      "sildenafil",
+      "clorindione"
+    ],
+    "severity": "minor",
+    "description": "The risk or severity of hemorrhage can be increased when Clorindione is combined with Sildenafil."
+  },
+  {
+    "drugs": [
+      "sildenafil",
+      "afelimomab"
+    ],
+    "severity": "major",
+    "description": "The metabolism of Sildenafil can be increased when combined with Afelimomab."
+  },
+  {
+    "drugs": [
+      "sildenafil",
+      "bicifadine"
+    ],
+    "severity": "minor",
+    "description": "The metabolism of Bicifadine can be decreased when combined with Sildenafil."
+  },
+  {
+    "drugs": [
+      "sildenafil",
+      "bendroflumethiazide"
+    ],
+    "severity": "moderate",
+    "description": "Sildenafil may increase the antihypertensive activities of Bendroflumethiazide."
+  },
+  {
+    "drugs": [
+      "sildenafil",
+      "lorazepam"
+    ],
+    "severity": "major",
+    "description": "The metabolism of Sildenafil can be decreased when combined with Lorazepam."
+  },
+  {
+    "drugs": [
+      "sildenafil",
+      "terazosin"
+    ],
+    "severity": "moderate",
+    "description": "Sildenafil may increase the antihypertensive activities of Terazosin."
+  },
+  {
+    "drugs": [
+      "sildenafil",
+      "guanfacine"
+    ],
+    "severity": "moderate",
+    "description": "Sildenafil may increase the antihypertensive activities of Guanfacine."
+  },
+  {
+    "drugs": [
+      "sildenafil",
+      "tamoxifen"
+    ],
+    "severity": "major",
+    "description": "The metabolism of Sildenafil can be increased when combined with Tamoxifen."
+  },
+  {
+    "drugs": [
+      "sildenafil",
+      "niguldipine"
+    ],
+    "severity": "moderate",
+    "description": "The serum concentration of Sildenafil can be increased when it is combined with Niguldipine."
+  },
+  {
+    "drugs": [
+      "sildenafil",
+      "acarbose"
+    ],
+    "severity": "moderate",
+    "description": "The therapeutic efficacy of Acarbose can be increased when used in combination with Sildenafil."
+  },
+  {
+    "drugs": [
+      "sildenafil",
+      "azithromycin"
+    ],
+    "severity": "major",
+    "description": "The metabolism of Sildenafil can be decreased when combined with Azithromycin."
+  },
+  {
+    "drugs": [
+      "sildenafil",
+      "acalabrutinib"
+    ],
+    "severity": "major",
+    "description": "The metabolism of Sildenafil can be decreased when combined with Acalabrutinib."
+  },
+  {
+    "drugs": [
+      "sildenafil",
+      "proguanil"
+    ],
+    "severity": "moderate",
+    "description": "The metabolism of Proguanil can be decreased when combined with Sildenafil."
+  },
+  {
+    "drugs": [
+      "sildenafil",
+      "olanzapine"
+    ],
+    "severity": "moderate",
+    "description": "The serum concentration of Olanzapine can be increased when it is combined with Sildenafil."
+  },
+  {
+    "drugs": [
+      "sildenafil",
+      "tesmilifene"
+    ],
+    "severity": "major",
+    "description": "The metabolism of Sildenafil can be increased when combined with Tesmilifene."
+  },
+  {
+    "drugs": [
+      "sildenafil",
+      "omoconazole"
+    ],
+    "severity": "moderate",
+    "description": "The serum concentration of Sildenafil can be increased when it is combined with Omoconazole."
+  },
+  {
+    "drugs": [
+      "sildenafil",
+      "zosuquidar"
+    ],
+    "severity": "moderate",
+    "description": "The serum concentration of Sildenafil can be increased when it is combined with Zosuquidar."
+  },
+  {
+    "drugs": [
+      "sildenafil",
+      "empagliflozin"
+    ],
+    "severity": "moderate",
+    "description": "The therapeutic efficacy of Empagliflozin can be increased when used in combination with Sildenafil."
+  },
+  {
+    "drugs": [
+      "sildenafil",
+      "ergotamine"
+    ],
+    "severity": "moderate",
+    "description": "The metabolism of Ergotamine can be decreased when combined with Sildenafil."
+  },
+  {
+    "drugs": [
+      "sildenafil",
+      "ombitasvir"
+    ],
+    "severity": "moderate",
+    "description": "The serum concentration of Ombitasvir can be increased when it is combined with Sildenafil."
+  },
+  {
+    "drugs": [
+      "finasteride",
+      "saxagliptin"
+    ],
+    "severity": "minor",
+    "description": "The metabolism of Saxagliptin can be decreased when combined with Finasteride."
+  },
+  {
+    "drugs": [
+      "finasteride",
+      "riociguat"
+    ],
+    "severity": "minor",
+    "description": "Finasteride may decrease the antihypertensive activities of Riociguat."
+  },
+  {
+    "drugs": [
+      "finasteride",
+      "remikiren"
+    ],
+    "severity": "minor",
+    "description": "Finasteride may decrease the antihypertensive activities of Remikiren."
+  },
+  {
+    "drugs": [
+      "finasteride",
+      "golimumab"
+    ],
+    "severity": "moderate",
+    "description": "The metabolism of Finasteride can be increased when combined with Golimumab."
+  },
+  {
+    "drugs": [
+      "finasteride",
+      "cryptenamine"
+    ],
+    "severity": "minor",
+    "description": "Finasteride may decrease the antihypertensive activities of Cryptenamine."
+  },
+  {
+    "drugs": [
+      "finasteride",
+      "copanlisib"
+    ],
+    "severity": "minor",
+    "description": "The metabolism of Copanlisib can be decreased when combined with Finasteride."
+  },
+  {
+    "drugs": [
+      "finasteride",
+      "floctafenine"
+    ],
+    "severity": "minor",
+    "description": "The risk or severity of hypertension can be increased when Finasteride is combined with Floctafenine."
+  },
+  {
+    "drugs": [
+      "finasteride",
+      "metreleptin"
+    ],
+    "severity": "minor",
+    "description": "The metabolism of Finasteride can be increased when combined with Metreleptin."
+  },
+  {
+    "drugs": [
+      "finasteride",
+      "chlorphentermine"
+    ],
+    "severity": "major",
+    "description": "The therapeutic efficacy of Finasteride can be decreased when used in combination with Chlorphentermine."
+  },
+  {
+    "drugs": [
+      "finasteride",
+      "mifepristone"
+    ],
+    "severity": "moderate",
+    "description": "The metabolism of Finasteride can be decreased when combined with Mifepristone."
+  },
+  {
+    "drugs": [
+      "finasteride",
+      "cocaine"
+    ],
+    "severity": "minor",
+    "description": "The metabolism of Finasteride can be decreased when combined with Cocaine."
+  },
+  {
+    "drugs": [
+      "finasteride",
+      "methylphenidate"
+    ],
+    "severity": "minor",
+    "description": "The risk or severity of hypertension can be increased when Methylphenidate is combined with Finasteride."
+  },
+  {
+    "drugs": [
+      "finasteride",
+      "amiodarone"
+    ],
+    "severity": "moderate",
+    "description": "The metabolism of Finasteride can be decreased when combined with Amiodarone."
+  },
+  {
+    "drugs": [
+      "finasteride",
+      "midazolam"
+    ],
+    "severity": "minor",
+    "description": "The metabolism of Finasteride can be decreased when combined with Midazolam."
+  },
+  {
+    "drugs": [
+      "finasteride",
+      "guanethidine"
+    ],
+    "severity": "minor",
+    "description": "Finasteride may decrease the antihypertensive activities of Guanethidine."
+  },
+  {
+    "drugs": [
+      "finasteride",
+      "cilostazol"
+    ],
+    "severity": "minor",
+    "description": "The metabolism of Finasteride can be decreased when combined with Cilostazol."
+  },
+  {
+    "drugs": [
+      "finasteride",
+      "fosinoprilat"
+    ],
+    "severity": "minor",
+    "description": "Finasteride may decrease the antihypertensive activities of Fosinoprilat."
+  },
+  {
+    "drugs": [
+      "finasteride",
+      "guanoclor"
+    ],
+    "severity": "minor",
+    "description": "Finasteride may decrease the antihypertensive activities of Guanoclor."
+  },
+  {
+    "drugs": [
+      "finasteride",
+      "naluzotan"
+    ],
+    "severity": "minor",
+    "description": "The risk or severity of hypertension can be increased when Finasteride is combined with Naluzotan."
+  },
+  {
+    "drugs": [
+      "finasteride",
+      "abatacept"
+    ],
+    "severity": "moderate",
+    "description": "The metabolism of Finasteride can be increased when combined with Abatacept."
+  },
+  {
+    "drugs": [
+      "finasteride",
+      "guanfacine"
+    ],
+    "severity": "minor",
+    "description": "Finasteride may decrease the antihypertensive activities of Guanfacine."
+  },
+  {
+    "drugs": [
+      "finasteride",
+      "nialamide"
+    ],
+    "severity": "minor",
+    "description": "The risk or severity of hypertension can be increased when Finasteride is combined with Nialamide."
+  },
+  {
+    "drugs": [
+      "finasteride",
+      "fluvastatin"
+    ],
+    "severity": "minor",
+    "description": "The metabolism of Finasteride can be decreased when combined with Fluvastatin."
+  },
+  {
+    "drugs": [
+      "finasteride",
+      "fenoterol"
+    ],
+    "severity": "minor",
+    "description": "The risk or severity of hypertension can be increased when Finasteride is combined with Fenoterol."
+  },
+  {
+    "drugs": [
+      "finasteride",
+      "formoterol"
+    ],
+    "severity": "minor",
+    "description": "The risk or severity of hypertension can be increased when Formoterol is combined with Finasteride."
+  },
+  {
+    "drugs": [
+      "finasteride",
+      "guanabenz"
+    ],
+    "severity": "minor",
+    "description": "The risk or severity of hypertension can be increased when Guanabenz is combined with Finasteride."
+  },
+  {
+    "drugs": [
+      "finasteride",
+      "moclobemide"
+    ],
+    "severity": "minor",
+    "description": "The risk or severity of hypertension can be increased when Moclobemide is combined with Finasteride."
+  },
+  {
+    "drugs": [
+      "finasteride",
+      "moxonidine"
+    ],
+    "severity": "minor",
+    "description": "The risk or severity of hypertension can be increased when Finasteride is combined with Moxonidine."
+  },
+  {
+    "drugs": [
+      "finasteride",
+      "glyburide"
+    ],
+    "severity": "minor",
+    "description": "The metabolism of Finasteride can be decreased when combined with Glyburide."
+  },
+  {
+    "drugs": [
+      "finasteride",
+      "ramiprilat"
+    ],
+    "severity": "minor",
+    "description": "Finasteride may decrease the antihypertensive activities of Ramiprilat."
+  },
+  {
+    "drugs": [
+      "finasteride",
+      "fluprednidene"
+    ],
+    "severity": "moderate",
+    "description": "The metabolism of Finasteride can be increased when combined with Fluprednidene."
+  },
+  {
+    "drugs": [
+      "finasteride",
+      "romidepsin"
+    ],
+    "severity": "minor",
+    "description": "The metabolism of Romidepsin can be decreased when combined with Finasteride."
+  },
+  {
+    "drugs": [
+      "finasteride",
+      "nabiximols"
+    ],
+    "severity": "moderate",
+    "description": "The metabolism of Nabiximols can be decreased when combined with Finasteride."
+  },
+  {
+    "drugs": [
+      "finasteride",
+      "argatroban"
+    ],
+    "severity": "major",
+    "description": "The metabolism of Argatroban can be decreased when combined with Finasteride."
+  },
+  {
+    "drugs": [
+      "finasteride",
+      "carprofen"
+    ],
+    "severity": "minor",
+    "description": "The risk or severity of hypertension can be increased when Carprofen is combined with Finasteride."
+  },
+  {
+    "drugs": [
+      "finasteride",
+      "cethromycin"
+    ],
+    "severity": "minor",
+    "description": "The metabolism of Cethromycin can be decreased when combined with Finasteride."
+  },
+  {
+    "drugs": [
+      "finasteride",
+      "alclofenac"
+    ],
+    "severity": "minor",
+    "description": "The risk or severity of hypertension can be increased when Finasteride is combined with Alclofenac."
+  },
+  {
+    "drugs": [
+      "finasteride",
+      "sirolimus"
+    ],
+    "severity": "major",
+    "description": "The metabolism of Sirolimus can be decreased when combined with Finasteride."
+  },
+  {
+    "drugs": [
+      "finasteride",
+      "nebivolol"
+    ],
+    "severity": "minor",
+    "description": "Finasteride may decrease the antihypertensive activities of Nebivolol."
+  },
+  {
+    "drugs": [
+      "finasteride",
+      "halofantrine"
+    ],
+    "severity": "minor",
+    "description": "The metabolism of Halofantrine can be decreased when combined with Finasteride."
+  },
+  {
+    "drugs": [
+      "finasteride",
+      "rimiterol"
+    ],
+    "severity": "minor",
+    "description": "The risk or severity of hypertension can be increased when Finasteride is combined with Rimiterol."
+  },
+  {
+    "drugs": [
+      "finasteride",
+      "naftopidil"
+    ],
+    "severity": "minor",
+    "description": "Finasteride may decrease the antihypertensive activities of Naftopidil."
+  },
+  {
+    "drugs": [
+      "finasteride",
+      "simvastatin"
+    ],
+    "severity": "minor",
+    "description": "The metabolism of Finasteride can be decreased when combined with Simvastatin."
+  },
+  {
+    "drugs": [
+      "finasteride",
+      "flupentixol"
+    ],
+    "severity": "minor",
+    "description": "The risk or severity of hypertension can be increased when Flupentixol is combined with Finasteride."
+  },
+  {
+    "drugs": [
+      "finasteride",
+      "fluconazole"
+    ],
+    "severity": "minor",
+    "description": "The metabolism of Finasteride can be decreased when combined with Fluconazole."
+  },
+  {
+    "drugs": [
+      "finasteride",
+      "clorgiline"
+    ],
+    "severity": "minor",
+    "description": "The risk or severity of hypertension can be increased when Finasteride is combined with Clorgiline."
+  },
+  {
+    "drugs": [
+      "finasteride",
+      "methoxamine"
+    ],
+    "severity": "minor",
+    "description": "The risk or severity of hypertension can be increased when Methoxamine is combined with Finasteride."
+  },
+  {
+    "drugs": [
+      "finasteride",
+      "armodafinil"
+    ],
+    "severity": "moderate",
+    "description": "The metabolism of Finasteride can be increased when combined with Armodafinil."
+  },
+  {
+    "drugs": [
+      "finasteride",
+      "ractopamine"
+    ],
+    "severity": "minor",
+    "description": "The risk or severity of hypertension can be increased when Finasteride is combined with Ractopamine."
+  },
+  {
+    "drugs": [
+      "finasteride",
+      "fentiazac"
+    ],
+    "severity": "minor",
+    "description": "The risk or severity of hypertension can be increased when Finasteride is combined with Fentiazac."
+  },
+  {
+    "drugs": [
+      "valaciclovir",
+      "tenoxicam"
+    ],
+    "severity": "moderate",
+    "description": "Tenoxicam may decrease the excretion rate of Valaciclovir which could result in a higher serum level."
+  },
+  {
+    "drugs": [
+      "valaciclovir",
+      "dobutamine"
+    ],
+    "severity": "moderate",
+    "description": "Valaciclovir may decrease the excretion rate of Dobutamine which could result in a higher serum level."
+  },
+  {
+    "drugs": [
+      "valaciclovir",
+      "cefapirin"
+    ],
+    "severity": "moderate",
+    "description": "Cefapirin may decrease the excretion rate of Valaciclovir which could result in a higher serum level."
+  },
+  {
+    "drugs": [
+      "valaciclovir",
+      "thiabendazole"
+    ],
+    "severity": "moderate",
+    "description": "Valaciclovir may decrease the excretion rate of Thiabendazole which could result in a higher serum level."
+  },
+  {
+    "drugs": [
+      "valaciclovir",
+      "tiapride"
+    ],
+    "severity": "moderate",
+    "description": "Valaciclovir may decrease the excretion rate of Tiapride which could result in a higher serum level."
+  },
+  {
+    "drugs": [
+      "valaciclovir",
+      "cefodizime"
+    ],
+    "severity": "moderate",
+    "description": "Cefodizime may decrease the excretion rate of Valaciclovir which could result in a higher serum level."
+  },
+  {
+    "drugs": [
+      "valaciclovir",
+      "oxacillin"
+    ],
+    "severity": "moderate",
+    "description": "Valaciclovir may decrease the excretion rate of Oxacillin which could result in a higher serum level."
+  },
+  {
+    "drugs": [
+      "valaciclovir",
+      "cefazolin"
+    ],
+    "severity": "moderate",
+    "description": "Cefazolin may decrease the excretion rate of Valaciclovir which could result in a higher serum level."
+  },
+  {
+    "drugs": [
+      "valaciclovir",
+      "etafedrine"
+    ],
+    "severity": "moderate",
+    "description": "Valaciclovir may decrease the excretion rate of Etafedrine which could result in a higher serum level."
+  },
+  {
+    "drugs": [
+      "valaciclovir",
+      "inotersen"
+    ],
+    "severity": "moderate",
+    "description": "Inotersen may decrease the excretion rate of Valaciclovir which could result in a higher serum level."
+  },
+  {
+    "drugs": [
+      "valaciclovir",
+      "levosalbutamol"
+    ],
+    "severity": "moderate",
+    "description": "Valaciclovir may decrease the excretion rate of Levosalbutamol which could result in a higher serum level."
+  },
+  {
+    "drugs": [
+      "valaciclovir",
+      "ketazolam"
+    ],
+    "severity": "moderate",
+    "description": "Valaciclovir may decrease the excretion rate of Ketazolam which could result in a higher serum level."
+  },
+  {
+    "drugs": [
+      "valaciclovir",
+      "esomeprazole"
+    ],
+    "severity": "moderate",
+    "description": "The excretion of Valaciclovir can be decreased when combined with Esomeprazole."
+  },
+  {
+    "drugs": [
+      "valaciclovir",
+      "doripenem"
+    ],
+    "severity": "moderate",
+    "description": "Valaciclovir may decrease the excretion rate of Doripenem which could result in a higher serum level."
+  },
+  {
+    "drugs": [
+      "valaciclovir",
+      "acemetacin"
+    ],
+    "severity": "moderate",
+    "description": "Acemetacin may decrease the excretion rate of Valaciclovir which could result in a higher serum level."
+  },
+  {
+    "drugs": [
+      "valaciclovir",
+      "thiethylperazine"
+    ],
+    "severity": "moderate",
+    "description": "Valaciclovir may decrease the excretion rate of Thiethylperazine which could result in a higher serum level."
+  },
+  {
+    "drugs": [
+      "valaciclovir",
+      "enasidenib"
+    ],
+    "severity": "moderate",
+    "description": "The excretion of Valaciclovir can be decreased when combined with Enasidenib."
+  },
+  {
+    "drugs": [
+      "valaciclovir",
+      "ketamine"
+    ],
+    "severity": "moderate",
+    "description": "Valaciclovir may decrease the excretion rate of Ketamine which could result in a higher serum level."
+  },
+  {
+    "drugs": [
+      "valaciclovir",
+      "testolactone"
+    ],
+    "severity": "moderate",
+    "description": "Valaciclovir may decrease the excretion rate of Testolactone which could result in a higher serum level."
+  },
+  {
+    "drugs": [
+      "valaciclovir",
+      "inositol"
+    ],
+    "severity": "moderate",
+    "description": "Valaciclovir may decrease the excretion rate of Inositol which could result in a higher serum level."
+  },
+  {
+    "drugs": [
+      "valaciclovir",
+      "leuprolide"
+    ],
+    "severity": "moderate",
+    "description": "Valaciclovir may decrease the excretion rate of Leuprolide which could result in a higher serum level."
+  },
+  {
+    "drugs": [
+      "valaciclovir",
+      "terbutaline"
+    ],
+    "severity": "moderate",
+    "description": "Valaciclovir may decrease the excretion rate of Terbutaline which could result in a higher serum level."
+  },
+  {
+    "drugs": [
+      "valaciclovir",
+      "lesinurad"
+    ],
+    "severity": "moderate",
+    "description": "Valaciclovir may decrease the excretion rate of Lesinurad which could result in a higher serum level."
+  },
+  {
+    "drugs": [
+      "valaciclovir",
+      "dronedarone"
+    ],
+    "severity": "moderate",
+    "description": "The excretion of Valaciclovir can be decreased when combined with Dronedarone."
+  },
+  {
+    "drugs": [
+      "valaciclovir",
+      "kebuzone"
+    ],
+    "severity": "moderate",
+    "description": "Kebuzone may decrease the excretion rate of Valaciclovir which could result in a higher serum level."
+  },
+  {
+    "drugs": [
+      "valaciclovir",
+      "perindopril"
+    ],
+    "severity": "moderate",
+    "description": "Valaciclovir may decrease the excretion rate of Perindopril which could result in a higher serum level."
+  },
+  {
+    "drugs": [
+      "valaciclovir",
+      "cefpiramide"
+    ],
+    "severity": "moderate",
+    "description": "Cefpiramide may decrease the excretion rate of Valaciclovir which could result in a higher serum level."
+  },
+  {
+    "drugs": [
+      "valaciclovir",
+      "almasilate"
+    ],
+    "severity": "moderate",
+    "description": "Valaciclovir may decrease the excretion rate of Almasilate which could result in a higher serum level."
+  },
+  {
+    "drugs": [
+      "valaciclovir",
+      "cefpodoxime"
+    ],
+    "severity": "moderate",
+    "description": "Cefpodoxime may decrease the excretion rate of Valaciclovir which could result in a higher serum level."
+  },
+  {
+    "drugs": [
+      "valaciclovir",
+      "oxaprozin"
+    ],
+    "severity": "moderate",
+    "description": "Valaciclovir may decrease the excretion rate of Oxaprozin which could result in a higher serum level."
+  },
+  {
+    "drugs": [
+      "valaciclovir",
+      "cefmenoxime"
+    ],
+    "severity": "moderate",
+    "description": "Cefmenoxime may decrease the excretion rate of Valaciclovir which could result in a higher serum level."
+  },
+  {
+    "drugs": [
+      "valaciclovir",
+      "nitroaspirin"
+    ],
+    "severity": "moderate",
+    "description": "Nitroaspirin may decrease the excretion rate of Valaciclovir which could result in a higher serum level."
+  },
+  {
+    "drugs": [
+      "valaciclovir",
+      "ioversol"
+    ],
+    "severity": "moderate",
+    "description": "Valaciclovir may decrease the excretion rate of Ioversol which could result in a higher serum level."
+  },
+  {
+    "drugs": [
+      "valaciclovir",
+      "nitrofurantoin"
+    ],
+    "severity": "moderate",
+    "description": "Valaciclovir may decrease the excretion rate of Nitrofurantoin which could result in a higher serum level."
+  },
+  {
+    "drugs": [
+      "valaciclovir",
+      "lenvatinib"
+    ],
+    "severity": "moderate",
+    "description": "The excretion of Valaciclovir can be decreased when combined with Lenvatinib."
+  },
+  {
+    "drugs": [
+      "valaciclovir",
+      "sulindac"
+    ],
+    "severity": "moderate",
+    "description": "Sulindac may decrease the excretion rate of Valaciclovir which could result in a higher serum level."
+  },
+  {
+    "drugs": [
+      "valaciclovir",
+      "doxepin"
+    ],
+    "severity": "major",
+    "description": "Valaciclovir may decrease the excretion rate of Doxepin which could result in a higher serum level."
+  },
+  {
+    "drugs": [
+      "valaciclovir",
+      "ticlopidine"
+    ],
+    "severity": "moderate",
+    "description": "Valaciclovir may decrease the excretion rate of Ticlopidine which could result in a higher serum level."
+  },
+  {
+    "drugs": [
+      "valaciclovir",
+      "amitriptyline"
+    ],
+    "severity": "major",
+    "description": "Valaciclovir may decrease the excretion rate of Amitriptyline which could result in a higher serum level."
+  },
+  {
+    "drugs": [
+      "valaciclovir",
+      "talniflumate"
+    ],
+    "severity": "moderate",
+    "description": "Talniflumate may decrease the excretion rate of Valaciclovir which could result in a higher serum level."
+  },
+  {
+    "drugs": [
+      "valaciclovir",
+      "sumatriptan"
+    ],
+    "severity": "moderate",
+    "description": "Valaciclovir may decrease the excretion rate of Sumatriptan which could result in a higher serum level."
+  },
+  {
+    "drugs": [
+      "valaciclovir",
+      "ipecac"
+    ],
+    "severity": "moderate",
+    "description": "Valaciclovir may decrease the excretion rate of Ipecac which could result in a higher serum level."
+  },
+  {
+    "drugs": [
+      "valaciclovir",
+      "acyclovir"
+    ],
+    "severity": "moderate",
+    "description": "Valaciclovir may decrease the excretion rate of Acyclovir which could result in a higher serum level."
+  },
+  {
+    "drugs": [
+      "valaciclovir",
+      "cefadroxil"
+    ],
+    "severity": "moderate",
+    "description": "Valaciclovir may decrease the excretion rate of Cefadroxil which could result in a higher serum level."
+  },
+  {
+    "drugs": [
+      "valaciclovir",
+      "penbutolol"
+    ],
+    "severity": "moderate",
+    "description": "Valaciclovir may decrease the excretion rate of Penbutolol which could result in a higher serum level."
+  },
+  {
+    "drugs": [
+      "valaciclovir",
+      "capecitabine"
+    ],
+    "severity": "moderate",
+    "description": "Valaciclovir may decrease the excretion rate of Capecitabine which could result in a higher serum level."
+  },
+  {
+    "drugs": [
+      "valaciclovir",
+      "aceclofenac"
+    ],
+    "severity": "moderate",
+    "description": "Valaciclovir may decrease the excretion rate of Aceclofenac which could result in a higher serum level."
+  },
+  {
+    "drugs": [
+      "valaciclovir",
+      "cefsulodin"
+    ],
+    "severity": "moderate",
+    "description": "Cefsulodin may decrease the excretion rate of Valaciclovir which could result in a higher serum level."
+  },
+  {
+    "drugs": [
+      "valaciclovir",
+      "suxibuzone"
+    ],
+    "severity": "moderate",
+    "description": "Suxibuzone may decrease the excretion rate of Valaciclovir which could result in a higher serum level."
+  },
+  {
+    "drugs": [
+      "valaciclovir",
+      "oxazepam"
+    ],
+    "severity": "moderate",
+    "description": "Valaciclovir may decrease the excretion rate of Oxazepam which could result in a higher serum level."
+  }
+]
