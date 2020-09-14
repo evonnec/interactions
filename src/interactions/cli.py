@@ -13,5 +13,3 @@ def main():
         for interaction in sorted_interactions:
             if interaction.severity == sorted_interactions[0].severity:
                 print(interaction.severity.upper() + ': ' + interaction.description)
-    # Test at scale
-    # Fill in README
