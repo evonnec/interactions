@@ -18,4 +18,8 @@ setup(
     packages=find_packages(where='src'),
     version='0.1',
     install_requires=INSTALL_REQUIRES,
+    entry_points="""
+        [console_scripts]
+        interactions=interactions.cli:main
+    """,
 )
