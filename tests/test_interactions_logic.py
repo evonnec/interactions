@@ -44,3 +44,33 @@ class TestFindInteractions:
         result = find_interactions(interactions=interactions, drugs=drugs)
         expected = [interaction]
         assert result == expected
+
+class TestRankSeverity:
+
+    def test_rank_severity(self):
+        first_major = Interaction(drugs=[], severity='major', description='1 major')
+        first_moderate = Interaction(drugs=[], severity='moderate', description='1 moderate')
+        first_minor = Interaction(drugs=[], severity='minor', description='1 minor')
+
+        second_major = Interaction(drugs=[], severity='major', description='2 major')
+        second_moderate = Interaction(drugs=[], severity='moderate', description='2 moderate')
+        second_minor = Interaction(drugs=[], severity='minor', description='2 minor')
+
+        interactions = [
+            first_major,
+            first_moderate,
+            first_minor,
+            second_major,
+            second_moderate,
+            second_minor,
+        ]
+        result = sorted(interactions, reverse=True)
+        expected_result = [
+            first_major,
+            second_major,
+            first_moderate,
+            second_moderate,
+            first_minor,
+            second_minor,
+        ]
+        assert result == expected_result
