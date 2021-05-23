@@ -39,7 +39,7 @@ class Interaction:
             return False
 
     def __repr__(self):
-        return '<interaction: ' + str(self.drugs) + ',' + str(self.description) + '>'
+        return '<interaction: ' + str(self.drugs) + ', ' + str(self.description) + '>'
 
     def __lt__(self, other):
         if self.severity == 'major':
