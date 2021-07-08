@@ -29,9 +29,9 @@ Note: all examples are based on the interactions.json file included with this de
 #### Output  
 (order should match the input above)  
 
-`MODERATE: Sildenafil may potentiate the hypotensive effect of alpha blockers, resulting in symptomatic hypotension in some patients.`
-`No interaction`
-`MAJOR: Valaciclovir may decrease the excretion rate of Doxepin which could result in a higher serum level.`
+`MODERATE: Sildenafil may potentiate the hypotensive effect of alpha blockers, resulting in symptomatic hypotension in some patients.`  
+`No interaction`  
+`MAJOR: Valaciclovir may decrease the excretion rate of Doxepin which could result in a higher serum level.`  
 
 #### Constraints
 Number of medications per line between 1 and 20 Number of lines per execution between 1 and 10,000
