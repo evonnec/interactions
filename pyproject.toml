@@ -1,0 +1,25 @@
+[project]
+name = "interactions"
+version = "0.1"
+description = "severity of drug interactions cli"
+dependencies = [
+    "click",
+    "pytest",
+    "mypy",
+    "pyproject-toml",
+    "black",
+    "ruff",
+]
+
+[tool.mypy]
+[[toolmypy.overrides]]
+module = []
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+pythonpath = [
+  "src",
+]
+addopts = [
+    "--import-mode=importlib",
+]
