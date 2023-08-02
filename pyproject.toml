@@ -11,6 +11,10 @@ dependencies = [
     "ruff",
 ]
 
+[project.scripts]
+interactions="interactions.cli:main"
+[console_scripts]
+
 [tool.mypy]
 [[toolmypy.overrides]]
 module = []
@@ -23,3 +27,4 @@ pythonpath = [
 addopts = [
     "--import-mode=importlib",
 ]
+

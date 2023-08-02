@@ -37,8 +37,12 @@ Note: all examples are based on the interactions.json file included with this de
 Number of medications per line between 1 and 20 Number of lines per execution between 1 and 10,000
 
 ## Setup
-This requires Python 3.
-To install this package, run `pip install .`
+Requires Python3
+Create a virtual python environment in the repository
+`python -m venv interactions`
+`source interactions/bin/activate`
+We are using pyproject.toml, and we're not using setup.py anymore
+To install this package, run `pip install -e .`
 
 ## How to use Interactions
 Interactions must be run from a directory that includes `interactions.json`
