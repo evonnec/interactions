@@ -37,24 +37,21 @@ Note: all examples are based on the interactions.json file included with this de
 Number of medications per line between 1 and 20 Number of lines per execution between 1 and 10,000
 
 ## Setup
-Requires Python3
-Create a virtual python environment in the repository
-`python -m venv interactions`
-`source interactions/bin/activate`
-We are using pyproject.toml, and we're not using setup.py anymore
-To install this package, run `pip install -e .`
+Requires [uv](https://docs.astral.sh/uv/) (it will install Python 3.14 for you).
+Packaging is configured entirely in pyproject.toml.
+To create the virtual environment and install the package and dev tools, run
+`uv sync`
 
 ## How to use Interactions
 Interactions must be run from a directory that includes `interactions.json`
 Inputs can be saved in a text file that is piped in to the function `interactions` so:
-`interactions < input.txt`
+`uv run interactions < input.txt`
 The function will then print out the interaction severity and description that is the highest severity first listed in the file `interactions.json`
 
 ## Included Tests
 Additionally, there are tests for the interactions logic and for the loading of the json file.
-To run the tests, do 
-`pip install pytest`
-and run `pytest`
+To run the tests, run `uv run pytest`
+Lint and type checks: `uv run ruff check .`, `uv run ruff format --check .`, `uv run mypy src tests`
 
 ## Next Steps
 If I had time, I'd add tests for the cli layer.
