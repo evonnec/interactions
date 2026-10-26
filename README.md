@@ -115,6 +115,9 @@ Every behavioral claim here is covered by a test (`tests/test_contract.py`, `tes
 - **Duplicate pairs in the data.** If the same unordered pair appears more than once, the highest
   severity wins, then the earliest in the file. A warning is printed on STDERR.
 - **Input encoding is UTF-8.** Invalid bytes produce `error: input is not valid UTF-8` and exit 1.
+  One UTF-8 byte-order mark at the very start of STDIN (written by Windows Notepad, PowerShell and
+  Excel) is ignored. A U+FEFF anywhere else (for example the second file of `cat a.txt b.txt`) is an
+  ordinary character and stays attached to the drug name next to it.
 - **The spec limits (1-20 drugs per line, up to 10,000 lines) are not enforced.** Longer inputs work;
   per-line cost grows with the square of the number of distinct known drugs on the line.
 

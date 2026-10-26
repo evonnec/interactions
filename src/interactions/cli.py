@@ -77,7 +77,8 @@ def run(index: InteractionIndex) -> int:
     """Stream STDIN to STDOUT; one output line per input line."""
     stdin = sys.stdin
     if hasattr(stdin, "reconfigure"):
-        stdin.reconfigure(encoding="utf-8", errors="strict")
+        # utf-8-sig is strict UTF-8 that also drops one BOM at the very start of the stream
+        stdin.reconfigure(encoding="utf-8-sig", errors="strict")
     try:
         sys.stdout.writelines(f"{result}\n" for result in process_lines(stdin, index))
         sys.stdout.flush()

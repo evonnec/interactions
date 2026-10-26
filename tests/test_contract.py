@@ -228,3 +228,42 @@ class TestExitCodesAndStreams:
         assert first.startswith(b"MODERATE: Sildenafil")
         assert code == 0
         assert stderr == b""
+
+
+class TestByteOrderMark:
+    """A leading UTF-8 BOM (issue #31) must not change the output; later ones are not stripped."""
+
+    BOM = b"\xef\xbb\xbf"
+
+    @staticmethod
+    def run(stdin: bytes) -> subprocess.CompletedProcess[bytes]:
+        return subprocess.run(
+            [sys.executable, "-m", "interactions"], input=stdin, capture_output=True, check=False
+        )
+
+    @pytest.mark.parametrize("line", [b"sildenafil tamsulosin", b"sildenafil nitroglycerin"])
+    def test_leading_bom_is_ignored(self, line: bytes) -> None:
+        with_bom = self.run(self.BOM + line + b"\n")
+        without = self.run(line + b"\n")
+        assert with_bom.stdout == without.stdout != b"No interaction\n"
+        assert (with_bom.returncode, with_bom.stderr) == (0, b"")
+
+    @pytest.mark.parametrize(
+        ("stdin", "expected"),
+        [
+            (BOM, b""),  # a BOM alone is an empty stream
+            (BOM + b"\n", b"No interaction\n"),  # BOM then a blank line
+            (BOM + b" sildenafil tamsulosin\n", None),
+            (BOM + b"sildenafil tamsulosin\n", None),
+            # only the first BOM of the stream is dropped; later ones are ordinary characters
+            (b"x\n" + BOM + b"sildenafil tamsulosin\n", b"No interaction\nNo interaction\n"),
+            (BOM + BOM + b"sildenafil tamsulosin\n", b"No interaction\n"),
+        ],
+    )
+    def test_only_one_leading_bom_is_dropped(self, stdin: bytes, expected: bytes | None) -> None:
+        result = self.run(stdin)
+        assert result.returncode == 0
+        if expected is None:
+            assert result.stdout.startswith(b"MODERATE: Sildenafil")
+        else:
+            assert result.stdout == expected

@@ -147,6 +147,32 @@ class TestErrors:
         assert err.startswith("error: input is not valid UTF-8")
 
 
+class TestStdinEncoding:
+    def test_leading_bom_is_ignored(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture[str],
+        mini_data_path: Path,
+    ) -> None:
+        raw = io.BytesIO(b"\xef\xbb\xbffoo bar\nfoo bar\n")
+        monkeypatch.setattr("sys.stdin", io.TextIOWrapper(raw, encoding="utf-8", newline="\n"))
+        assert cli.main(["--data", str(mini_data_path)]) == 0
+        assert capsys.readouterr().out == f"{FOO_BAR}\n{FOO_BAR}\n"
+
+    def test_stdin_is_utf8_even_if_the_locale_is_latin1(
+        self, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str], tmp_path: Path
+    ) -> None:
+        data = tmp_path / "wide.json"
+        data.write_text(
+            '[{"drugs": ["sa", "b"], "severity": "minor", "description": "d"}]', encoding="utf-8"
+        )
+        raw = (chr(0xFF53) + "a b\n").encode()  # full-width s: NFKC folds it to "s"
+        stdin = io.TextIOWrapper(io.BytesIO(raw), encoding="latin-1", newline="\n")
+        monkeypatch.setattr("sys.stdin", stdin)
+        assert cli.main(["--data", str(data)]) == 0
+        assert capsys.readouterr().out == "MINOR: d\n"
+
+
 class TestDuplicatePairsWarning:
     def test_warns_on_stderr_but_keeps_stdout_clean(self, invoke: Invoke) -> None:
         Path("dup.json").write_text(
