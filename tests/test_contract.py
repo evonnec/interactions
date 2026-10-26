@@ -171,17 +171,6 @@ class TestExitCodesAndStreams:
         assert "usage: interactions" in result.stdout
         assert result.stderr == ""
 
-    def test_help_does_not_wait_for_stdin(self) -> None:
-        result = subprocess.run(
-            [sys.executable, "-m", "interactions", "--help"],
-            stdin=subprocess.PIPE,  # open and never written to or closed by the test
-            capture_output=True,
-            text=True,
-            timeout=30,
-            check=False,
-        )
-        assert result.returncode == 0
-
     def test_version(self, run_process: RunProcess) -> None:
         result = run_process("", "--version")
         assert result.stdout == f"interactions {interactions.__version__}\n"

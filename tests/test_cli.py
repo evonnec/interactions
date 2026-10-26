@@ -142,9 +142,10 @@ class TestErrors:
         raw = io.BytesIO(b"foo bar\n\xff\xfe\n")
         monkeypatch.setattr("sys.stdin", io.TextIOWrapper(raw, encoding="ascii"))
         code = cli.main(["--data", str(mini_data_path)])
-        err = capsys.readouterr().err
+        out, err = capsys.readouterr()
         assert code == 1
-        assert err.startswith("error: input is not valid UTF-8")
+        assert out == f"{FOO_BAR}\n"  # the result for the line before the bad one
+        assert err == "error: line 2: invalid UTF-8\n"
 
 
 class TestStdinEncoding:

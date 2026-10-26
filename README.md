@@ -77,7 +77,7 @@ python -m interactions < input.txt   # equivalent
 ```
 
 STDIN is the interface: lines of space-separated drug names in, one result line per input line out,
-streamed line by line. STDOUT carries results only; warnings and errors go to STDERR.
+streamed. STDOUT carries results only; warnings and errors go to STDERR.
 
 | Option | Meaning |
 |---|---|
@@ -90,8 +90,29 @@ current directory; else the copy bundled in the package
 (`src/interactions/data/interactions.json`). It is loaded and validated once, before STDIN is read,
 so a bad file fails immediately even when STDIN is empty.
 
-Exit codes: `0` success (also when the reader of STDOUT closes the pipe early, e.g. `| head -1`),
-`1` data or input error (one `error: ...` line on STDERR, nothing on STDOUT), `2` usage error.
+### Streams and exit codes
+
+- **STDOUT** carries results only, as UTF-8 with `\n` line endings on every platform and locale
+  (it is pinned, not inherited from `LANG`, `PYTHONIOENCODING` or the Windows code page).
+- **STDERR** carries one `error: ...` line for a failure, plus `warning: ...` lines for duplicate
+  data pairs. Never a traceback for an input, data or I/O problem.
+- **STDIN** is read as UTF-8 with `\n` as the only line separator on every platform (a lone `\r`
+  does not split a line). Output is written in blocks when STDOUT is a pipe or a file, so results
+  can appear after the input ends rather than line by line; that is not a guarantee either way.
+
+| Exit | Meaning |
+|---|---|
+| `0` | Success. Also when the reader of STDOUT closes the pipe early (`\| head -1`), silently. |
+| `1` | Data error (nothing is read from STDIN), invalid input, or a STDIN/STDOUT failure. |
+| `2` | Usage error. |
+| `130` | Interrupted (Ctrl-C), with no traceback. |
+
+Invalid UTF-8 on STDIN is reported as `error: line N: invalid UTF-8` and exits 1. Results are
+streamed, so the output for lines `1..N-1` has already been written (exactly those lines, no more
+and no fewer) and nothing is written for line `N` or later. Write failures such as a full disk give
+`error: cannot write output: <reason>`; a closed STDIN or STDOUT gives `error: stdin is closed` or
+`error: stdout is closed`.
+
 Positional arguments are not accepted; use shell redirection to read a file.
 
 ## Behavior and assumptions
@@ -114,7 +135,7 @@ Every behavioral claim here is covered by a test (`tests/test_contract.py`, `tes
 - **Pairwise only.** Every record names exactly two drugs.
 - **Duplicate pairs in the data.** If the same unordered pair appears more than once, the highest
   severity wins, then the earliest in the file. A warning is printed on STDERR.
-- **Input encoding is UTF-8.** Invalid bytes produce `error: input is not valid UTF-8` and exit 1.
+- **Input encoding is UTF-8.** Invalid bytes produce `error: line N: invalid UTF-8` and exit 1.
   One UTF-8 byte-order mark at the very start of STDIN (written by Windows Notepad, PowerShell and
   Excel) is ignored. A U+FEFF anywhere else (for example the second file of `cat a.txt b.txt`) is an
   ordinary character and stays attached to the drug name next to it.
@@ -130,7 +151,9 @@ Every behavioral claim here is covered by a test (`tests/test_contract.py`, `tes
 ```
 
 `drugs` must hold two distinct, non-empty names without whitespace (distinct after normalization);
-`severity` is `minor`, `moderate` or `major` (any case); `description` is a non-empty string.
+`severity` is `minor`, `moderate` or `major` (any case); `description` is a non-empty single line: no line breaks or other control characters (tab is
+allowed), because descriptions are printed verbatim and each input line must produce one output
+line. A UTF-8 BOM at the start of the file is accepted.
 Unknown keys, missing keys and any other shape are rejected at load time with a one-line error that
 names the file and the record index, for example
 `error: bad.json: record 3: unknown severity 'contraindicated'`, and exit code 1.
@@ -175,10 +198,10 @@ to result lines; only `data.py` (the data file) and `cli.py` (STDIN, STDOUT, STD
 ## Development
 
 ```sh
-uv run pytest --cov=interactions --cov-report=term-missing   # tests and coverage
+uv run pytest --cov=interactions --cov-fail-under=100         # tests, 100% coverage required
 uv run ruff check .                                          # lint
 uv run ruff format --check .                                 # formatting
-uv run mypy src tests                                        # strict type check
+uv run mypy src tests scripts                                # strict type check
 uv run python scripts/bench.py                               # time the CLI on input.txt
 uv run python scripts/gen_input.py --lines 10000 --seed 1 > big_input.txt
 ```
@@ -193,7 +216,11 @@ uv run python scripts/gen_input.py --lines 10000 --seed 1 > big_input.txt
   10,000 x 20 generated input, help, version, error exit codes and a closed STDOUT pipe.
 - `tests/test_property.py` compares the index with a brute-force reference
   (`tests/reference.py`) on seeded random data and inputs, including duplicate pairs and ties.
-- Coverage is 100%.
+- `tests/test_regressions.py` holds one test group per issue found by adversarial testing: BOM and
+  encoding handling, single-line descriptions, stdio pinning (including a simulated Windows
+  `TextIOWrapper`), invalid UTF-8 deep in the stream, Ctrl-C, closed or full STDOUT, and a
+  `--help` that must not wait on an open STDIN.
+- Coverage is 100% and CI fails below that.
 
 ## Limitations and future work
 
