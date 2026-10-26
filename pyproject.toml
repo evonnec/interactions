@@ -59,3 +59,6 @@ mypy_path = "src"
 testpaths = ["tests"]
 pythonpath = ["src"]
 addopts = ["--import-mode=importlib"]
+
+[tool.coverage.report]
+exclude_also = ["if __name__ == .__main__.:"]

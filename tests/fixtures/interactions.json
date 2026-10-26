@@ -1,0 +1,32 @@
+[
+  {
+    "drugs": ["foo", "bar"],
+    "severity": "moderate",
+    "description": "Foo and bar moderate."
+  },
+  {
+    "drugs": ["foo", "baz"],
+    "severity": "minor",
+    "description": "Foo and baz minor."
+  },
+  {
+    "drugs": ["alpha", "beta"],
+    "severity": "major",
+    "description": "Alpha and beta major (first)."
+  },
+  {
+    "drugs": ["alpha", "gamma"],
+    "severity": "major",
+    "description": "Alpha and gamma major (second)."
+  },
+  {
+    "drugs": ["foo", "qux"],
+    "severity": "major",
+    "description": "Foo and qux major."
+  },
+  {
+    "drugs": ["alpha", "delta"],
+    "severity": "moderate",
+    "description": "Alpha and delta moderate."
+  }
+]
