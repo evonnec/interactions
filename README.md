@@ -107,6 +107,13 @@ so a bad file fails immediately even when STDIN is empty.
 | `2` | Usage error. |
 | `130` | Interrupted (Ctrl-C), with no traceback. |
 
+Ctrl-C always ends the process with exit 130 and nothing on STDERR, also in a pipeline whose reader
+has already gone and also when STDOUT is a full pipe that nobody reads. Results that were not yet
+written to STDOUT at that moment are discarded. The exit code is a plain `130` (not death by
+signal) on every platform. A Ctrl-C in the first milliseconds, while the interpreter itself is
+starting, is outside the program's control: then Python may kill the process by SIGINT or print
+its own traceback.
+
 Invalid UTF-8 on STDIN is reported as `error: line N: invalid UTF-8` and exits 1. Results are
 streamed, so the output for lines `1..N-1` has already been written (exactly those lines, no more
 and no fewer) and nothing is written for line `N` or later. Write failures such as a full disk give
@@ -228,6 +235,8 @@ uv run python scripts/gen_input.py --lines 10000 --seed 1 > big_input.txt
   encoding handling, single-line descriptions, stdio pinning (including a simulated Windows
   `TextIOWrapper`), invalid UTF-8 deep in the stream, Ctrl-C, closed or full STDOUT, and a
   `--help` that must not wait on an open STDIN.
+- `tests/test_sigint.py` covers Ctrl-C: in a pipeline, with a full STDOUT pipe, repeated, and during
+  start-up (POSIX subprocess tests plus an in-process entry-point test).
 - Coverage is 100% and CI fails below that.
 
 ## Limitations and future work

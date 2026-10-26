@@ -21,7 +21,7 @@ classifiers = [
 dependencies = []
 
 [project.scripts]
-interactions = "interactions.cli:main"
+interactions = "interactions.__main__:entry"
 
 [dependency-groups]
 dev = [

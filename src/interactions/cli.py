@@ -142,10 +142,10 @@ def run(index: InteractionIndex) -> int:
 
 def main(argv: Sequence[str] | None = None) -> int:
     """Run the CLI; never raises for I/O problems (see the exit codes in the module docstring)."""
-    stderr = sys.stderr
-    if hasattr(stderr, "reconfigure"):  # messages are UTF-8 with "\n" endings on every platform
-        stderr.reconfigure(encoding="utf-8", errors="backslashreplace", newline="\n")
     try:
+        stderr = sys.stderr
+        if hasattr(stderr, "reconfigure"):  # messages are UTF-8 with "\n" endings on every platform
+            stderr.reconfigure(encoding="utf-8", errors="backslashreplace", newline="\n")
         code = _main(argv)
         if sys.stdout is not None:
             sys.stdout.flush()  # --help/--version output is flushed here, not at interpreter exit
@@ -154,6 +154,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         _silence_stdout()
         return EXIT_OK
     except KeyboardInterrupt:
+        # Results still buffered are discarded: the reader may be gone (a flush would hit EPIPE) or
+        # not reading (a flush would block, and Ctrl-C must always end the process). Pointing
+        # fd 1 at /dev/null makes the interpreter's exit-time flush harmless.
+        _silence_stdout()
         return EXIT_INTERRUPTED
     except OSError as error:
         _silence_stdout()
