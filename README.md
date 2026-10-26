@@ -12,7 +12,7 @@ common conditions. When prescribing, physicians constantly look for drug interac
 arise when a patient's response to a drug is affected by other drugs, food, supplements,
 environmental factors or disease. Before prescribing any medication, patients are asked which other
 drugs they are currently taking, so that physicians can find potential risks introduced by a new
-medication. This tool is a take-home exercise modeling that check.
+medication. This repository contains a small CLI that models that check.
 
 ## Problem statement
 
@@ -158,7 +158,7 @@ Unknown keys, missing keys and any other shape are rejected at load time with a 
 names the file and the record index, for example
 `error: bad.json: record 3: unknown severity 'contraindicated'`, and exit code 1.
 
-The repository root `interactions.json` (the exercise's file) and the bundled
+The repository root `interactions.json` (the reference copy) and the bundled
 `src/interactions/data/interactions.json` must be byte-identical; a test enforces it. To update the
 dataset, change both files and run the tests.
 

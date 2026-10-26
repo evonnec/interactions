@@ -25,7 +25,7 @@ normalizes `1.0.0-rc.1` to `1.0.0rc1`, so use the normalized form in the tag.
 
    ```sh
    uv version --bump patch   # or minor / major
-   uv version --short        # prints the new version, e.g. 0.1.1
+   uv version --short        # prints the new version, e.g. 0.2.1
    ```
 
    For a pre-release: `uv version 1.0.0rc1`.
@@ -48,7 +48,7 @@ normalizes `1.0.0-rc.1` to `1.0.0rc1`, so use the normalized form in the tag.
 3. Runs the test suite.
 4. Runs `uv build` (sdist and wheel).
 5. Creates a GitHub Release for the tag with auto-generated notes, attaching `dist/*`.
-   Versions that are not plain `X.Y.Z` are marked as pre-releases.
+   Versions that are not `X.Y.Z` or `X.Y.Z.postN` are marked as pre-releases.
 
 The workflow can also be run manually (Actions, Release, Run workflow) with the name of an
 existing tag. Nothing is published to PyPI.

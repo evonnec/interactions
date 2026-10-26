@@ -158,6 +158,27 @@ def test_non_ascii_description_is_utf8_regardless_of_locale(tmp_path: Path) -> N
     assert (r.returncode, r.stdout, r.stderr) == (0, "MAJOR: dose ≥ 10 mg\n".encode(), b"")
 
 
+def test_subprocess_stdio_bytes_are_identical_on_every_platform() -> None:
+    """Real child process (runs on Windows too): lone CR never splits, CRLF does, output is LF."""
+    r = run_bytes(b"sildenafil\rtamsulosin\r\nsildenafil tamsulosin\r\n")
+    assert r.returncode == 0
+    assert r.stderr == b""
+    # CR is whitespace inside line 1: one pair (SILD), not two lines; line 2 is the same pair
+    assert r.stdout == (SILD + "\n").encode() * 2
+
+
+def test_subprocess_utf8_output_under_a_legacy_console_code_page(tmp_path: Path) -> None:
+    data = tmp_path / "uni.json"
+    data.write_text(
+        '[{"drugs":["a","b"],"severity":"major","description":"dose \\u2265 10 mg"}]',
+        encoding="utf-8",
+    )
+    env = {**os.environ, "PYTHONIOENCODING": "cp1252", "PYTHONUTF8": "0"}
+    r = run_bytes(b"\xef\xbb\xbfa b\r\nb a\r\n", "--data", str(data), env=env)
+    assert (r.returncode, r.stderr) == (0, b"")
+    assert r.stdout == "MAJOR: dose ≥ 10 mg\nMAJOR: dose ≥ 10 mg\n".encode()
+
+
 # --- #34: invalid UTF-8 mid-stream: exact prefix, named line ----------------------------------
 def test_invalid_utf8_far_into_the_stream_gives_exact_prefix_and_line_number() -> None:
     good = b"sildenafil tamsulosin\n"
