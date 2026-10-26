@@ -79,13 +79,21 @@ jobs:
           python-version-file: .python-version
       - run: uv sync --locked --all-groups
       - run: uv build
-      - name: Smoke test built wheel
+      - name: Check wheel contents
+        run: |
+          python3 -m zipfile -l dist/*.whl | tee "$RUNNER_TEMP/wheel.txt"
+          grep -q 'interactions/data/interactions.json' "$RUNNER_TEMP/wheel.txt"
+          ! grep -q 'make_input_file\|gen_input' "$RUNNER_TEMP/wheel.txt"
+      - name: Smoke test built wheel from another directory
         run: |
           uv venv "$RUNNER_TEMP/smoke"
           uv pip install --python "$RUNNER_TEMP/smoke" dist/*.whl
-          "$RUNNER_TEMP/smoke/bin/interactions" < input.txt > "$RUNNER_TEMP/out.txt"
-          test -s "$RUNNER_TEMP/out.txt"
-          head -n 3 "$RUNNER_TEMP/out.txt"
+          cp input.txt "$RUNNER_TEMP/input.txt"
+          cd "$RUNNER_TEMP"
+          ./smoke/bin/interactions < input.txt > out.txt
+          test "$(wc -l < input.txt)" -eq "$(wc -l < out.txt)"
+          head -n 3 out.txt
+          ./smoke/bin/interactions --version
       - uses: actions/upload-artifact@v7.0.2
         with:
           name: dist

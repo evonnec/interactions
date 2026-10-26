@@ -1,20 +1,29 @@
 """Shared fixtures for the test suite."""
 
-import io
 import json
-import shutil
+import subprocess
+import sys
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
 import pytest
 
-from interactions import cli
+from interactions.data import load_bundled, load_file
+from interactions.index import InteractionIndex
 
-FIXTURES_DIR = Path(__file__).parent / "fixtures"
-REPO_ROOT = Path(__file__).parent.parent
+TESTS_DIR = Path(__file__).parent
+DATA_DIR = TESTS_DIR / "data"
+REPO_ROOT = TESTS_DIR.parent
+MINI_DATA = DATA_DIR / "mini_interactions.json"
 
-type RunCli = Callable[[str], list[str]]
+type RunProcess = Callable[..., subprocess.CompletedProcess[str]]
+
+
+@pytest.fixture(autouse=True)
+def _isolated_cwd(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Run every test from an empty temp dir so hidden CWD dependence fails immediately."""
+    monkeypatch.chdir(tmp_path)
 
 
 @pytest.fixture
@@ -23,34 +32,43 @@ def repo_root() -> Path:
 
 
 @pytest.fixture
-def raw_fixture_interactions() -> list[dict[str, Any]]:
-    """The fixture dataset as parsed JSON."""
-    data: list[dict[str, Any]] = json.loads((FIXTURES_DIR / "interactions.json").read_text())
-    return data
+def mini_data_path() -> Path:
+    return MINI_DATA
 
 
 @pytest.fixture
-def fixture_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
-    """A temp dir holding the fixture interactions.json, made the CWD."""
-    shutil.copy(FIXTURES_DIR / "interactions.json", tmp_path / "interactions.json")
-    monkeypatch.chdir(tmp_path)
-    return tmp_path
+def mini_records() -> list[dict[str, Any]]:
+    """The small hand-made dataset (ties, all severities) as parsed JSON."""
+    records: list[dict[str, Any]] = json.loads(MINI_DATA.read_text(encoding="utf-8"))
+    return records
 
 
 @pytest.fixture
-def real_dir(monkeypatch: pytest.MonkeyPatch) -> Path:
-    """The repository root (with the real interactions.json) as the CWD."""
-    monkeypatch.chdir(REPO_ROOT)
-    return REPO_ROOT
+def mini_index() -> InteractionIndex:
+    return InteractionIndex.build(load_file(MINI_DATA))
+
+
+@pytest.fixture(scope="session")
+def spec_index() -> InteractionIndex:
+    """Index of the dataset shipped in the package (for shipped-data contract tests only)."""
+    return InteractionIndex.build(load_bundled())
 
 
 @pytest.fixture
-def run_cli(monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> RunCli:
-    """Run ``cli.main()`` with the given STDIN text; return stdout split into lines."""
+def run_process() -> RunProcess:
+    """Run ``python -m interactions`` in a subprocess; returns the CompletedProcess (text mode)."""
 
-    def _run(stdin_text: str) -> list[str]:
-        monkeypatch.setattr("sys.stdin", io.StringIO(stdin_text))
-        cli.main()
-        return capsys.readouterr().out.splitlines()
+    def _run(
+        stdin: str = "", *args: str, cwd: Path | None = None
+    ) -> subprocess.CompletedProcess[str]:
+        return subprocess.run(
+            [sys.executable, "-m", "interactions", *args],
+            input=stdin,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            cwd=cwd,
+            check=False,
+        )
 
     return _run

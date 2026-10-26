@@ -61,7 +61,8 @@ Create the virtual environment and install the package plus dev tools:
 uv sync
 ```
 
-Or install the `interactions` command as a standalone tool:
+Or install the `interactions` command as a standalone tool. The dataset is bundled in the package,
+so the installed command works from any directory:
 
 ```sh
 uv tool install .
@@ -69,41 +70,104 @@ uv tool install .
 
 ## Usage
 
-The program must be run from a directory that contains `interactions.json`; it is read from the
-current working directory. Pipe a text file of drug lists into it:
-
 ```sh
-uv run interactions < input.txt
+interactions [--data PATH] [--version] [--help] < input.txt
+uv run interactions < input.txt      # from a checkout
+python -m interactions < input.txt   # equivalent
 ```
 
-`make_input_file.py` can generate a large sample input (1000 identical 20-drug lines):
+STDIN is the interface: lines of space-separated drug names in, one result line per input line out,
+streamed line by line. STDOUT carries results only; warnings and errors go to STDERR.
 
-```sh
-uv run python -m interactions.make_input_file > big_input.txt
+| Option | Meaning |
+|---|---|
+| `--data PATH` | Use this interactions JSON file |
+| `--version` | Print the version and exit |
+| `-h`, `--help` | Print usage and exit (never reads STDIN) |
+
+The data file is chosen in this order: `--data PATH`; else `./interactions.json` if it exists in the
+current directory; else the copy bundled in the package
+(`src/interactions/data/interactions.json`). It is loaded and validated once, before STDIN is read,
+so a bad file fails immediately even when STDIN is empty.
+
+Exit codes: `0` success (also when the reader of STDOUT closes the pipe early, e.g. `| head -1`),
+`1` data or input error (one `error: ...` line on STDERR, nothing on STDOUT), `2` usage error.
+Positional arguments are not accepted; use shell redirection to read a file.
+
+## Behavior and assumptions
+
+Every behavioral claim here is covered by a test (`tests/test_contract.py`, `tests/test_cli.py`,
+`tests/test_index.py`).
+
+- **One line out per line in.** The result is the most severe interaction among all pairs of drugs
+  on the line. If several interactions share the top severity, the one that appears first in the
+  data file wins; the order of drugs on the input line does not matter.
+- **Output format.** `MAJOR: <description>`, `MODERATE: <description>`, `MINOR: <description>`, or
+  `No interaction`. A blank or whitespace-only line prints `No interaction`.
+- **Matching is case-insensitive.** Drug names (in the data and on input) are normalized with one
+  function: Unicode NFKC, strip, `casefold()`. `Sildenafil` and `SILDENAFIL` match `sildenafil`.
+- **Tokenizing.** Lines are split on newlines only (`\n`, `\r\n`); within a line any whitespace
+  (spaces, tabs, form feed, U+2028, ...) separates drug names. Repeated drugs on a line are ignored.
+- **Unknown drugs are ignored.** A drug that is not in the dataset can never produce an
+  interaction, so a line that contains only unknown drugs prints `No interaction`. This is
+  indistinguishable from a real negative; see Limitations.
+- **Pairwise only.** Every record names exactly two drugs.
+- **Duplicate pairs in the data.** If the same unordered pair appears more than once, the highest
+  severity wins, then the earliest in the file. A warning is printed on STDERR.
+- **Input encoding is UTF-8.** Invalid bytes produce `error: input is not valid UTF-8` and exit 1.
+- **The spec limits (1-20 drugs per line, up to 10,000 lines) are not enforced.** Longer inputs work;
+  per-line cost grows with the square of the number of distinct known drugs on the line.
+
+## Data
+
+`interactions.json` is an array of records with exactly these keys:
+
+```json
+{"drugs": ["sildenafil", "tamsulosin"], "severity": "moderate", "description": "..."}
 ```
 
-## Project layout
+`drugs` must hold two distinct, non-empty names without whitespace (distinct after normalization);
+`severity` is `minor`, `moderate` or `major` (any case); `description` is a non-empty string.
+Unknown keys, missing keys and any other shape are rejected at load time with a one-line error that
+names the file and the record index, for example
+`error: bad.json: record 3: unknown severity 'contraindicated'`, and exit code 1.
+
+The repository root `interactions.json` (the exercise's file) and the bundled
+`src/interactions/data/interactions.json` must be byte-identical; a test enforces it. To update the
+dataset, change both files and run the tests.
+
+## Design
 
 ```text
-.
-├── interactions.json            # interaction data (read from the current directory)
-├── input.txt                    # sample input
-├── pyproject.toml               # packaging and tool configuration (uv_build)
-├── src/interactions/
-│   ├── __init__.py              # package version
-│   ├── cli.py                   # STDIN/STDOUT entry point (`interactions` command)
-│   ├── make_input_file.py       # sample input generator
-│   ├── py.typed
-│   └── lib/
-│       └── interactions_logic.py  # data model, loading and matching
-└── tests/
-    ├── conftest.py              # shared fixtures (CWD helpers, CLI runner)
-    ├── fixtures/interactions.json  # small dataset used by the unit and CLI tests
-    ├── test_interactions_logic.py  # unit tests
-    ├── test_cli.py              # end-to-end tests of cli.main()
-    ├── test_golden.py           # spec examples against the real data, subprocess tests
-    └── test_misc.py
+src/interactions/
+  model.py     Severity (IntEnum), frozen slotted Interaction, normalize()
+  data.py      load + validate the data file; DataError (the only module that reads the data file)
+  index.py     InteractionIndex (pair index), parse_drugs, format_result, process_lines (pure)
+  cli.py       argparse, data resolution, streaming STDIN to STDOUT, errors and exit codes
+  __main__.py  python -m interactions
+  data/interactions.json   bundled dataset
+scripts/       gen_input.py (seeded sample input generator), bench.py (timing); not packaged
+tests/         unit tests per module, CLI and end-to-end contract tests, property test
 ```
+
+**Algorithm.** The data is loaded and validated once. `InteractionIndex.build` keeps, for each
+unordered pair of drugs, the best record by (severity descending, file position ascending), and
+builds an adjacency map `drug -> {partner: record}`. Writing the tie-break into that sort key makes
+"first in the file" explicit. For each input line, `most_severe` takes the set of normalized drugs
+and, for each drug, intersects its partners with the line's drugs, keeping the smallest key.
+
+**Complexity.** With `I` interactions, `L` lines and `n` distinct drugs per line:
+build is `O(I)` time and memory, once; each line costs at most `n^2 / 2` lookups (190 for 20
+drugs), independent of `I`, so the total is `O(I + L * n^2)`. Reading the file once and replacing
+the per-record scan removed the dependence of per-line cost on the data size.
+
+**Performance.** `scripts/bench.py` times the CLI end to end (new interpreter, discarding output).
+On an Apple Silicon laptop, 10,004 lines of 20 drugs from `input.txt`: about 1.5 s before this
+refactor (data re-read and scanned per line) and about 0.12 s after, of which roughly 0.04 s is
+interpreter startup and imports. A seeded random 10,000 x 20 input takes the same time.
+
+**I/O is separated from logic.** `process_lines(lines, index)` is a pure generator from input lines
+to result lines; only `data.py` (the data file) and `cli.py` (STDIN, STDOUT, STDERR) do I/O.
 
 ## Development
 
@@ -112,41 +176,33 @@ uv run pytest --cov=interactions --cov-report=term-missing   # tests and coverag
 uv run ruff check .                                          # lint
 uv run ruff format --check .                                 # formatting
 uv run mypy src tests                                        # strict type check
+uv run python scripts/bench.py                               # time the CLI on input.txt
+uv run python scripts/gen_input.py --lines 10000 --seed 1 > big_input.txt
 ```
 
-## Design overview
+## Testing
 
-**Data model.** `Severity` is an `IntEnum` (`MINOR=1`, `MODERATE=2`, `MAJOR=3`) so severities
-compare naturally, and its names are the output labels. `Interaction` is a frozen dataclass with
-`drugs: tuple[str, ...]`, `severity` and `description`.
+- Unit tests for each module use a small hand-made dataset (`tests/data/mini_interactions.json`)
+  and in-memory records; every test runs from an empty temporary working directory.
+- `tests/test_contract.py` runs `python -m interactions` in a subprocess against the bundled data:
+  the spec examples byte for byte (`tests/data/spec_examples.in/.out`), the one-line-per-input
+  invariant (including `\f`, `\v`, `\x85` and U+2028 inside a line), the output grammar on a seeded
+  10,000 x 20 generated input, help, version, error exit codes and a closed STDOUT pipe.
+- `tests/test_property.py` compares the index with a brute-force reference
+  (`tests/reference.py`) on seeded random data and inputs, including duplicate pairs and ties.
+- Coverage is 100%.
 
-**Algorithm.** For each input line:
+## Limitations and future work
 
-1. Split the line on whitespace into a set of drug names.
-2. Load `interactions.json` and convert it to `Interaction` objects.
-3. Keep every interaction whose drugs are all present in the line's set (a subset test).
-4. Stable-sort the matches by descending severity, so equal severities keep file order.
-5. Print exactly one line: the first element of that sorted list (the most severe interaction;
-   among equal severities, the one that appears first in `interactions.json`), or
-   `No interaction` if there are no matches.
-
-**Complexity.** With `L` lines, `N` interactions in the file and `D` drugs per line, matching costs
-`O(N * D)` per line after parsing. `interactions.json` is re-read and re-parsed for every input
-line, so the total is `O(L * (N + N * D))`, dominated by file I/O and JSON parsing. Reading the file
-once would be a straightforward improvement.
-
-Matching is exact and case sensitive (`Sildenafil` does not match `sildenafil`), and repeated
-drug names on a line are collapsed.
-
-## Known limitations
-
-- `interactions.json` is re-read for every input line.
-- `interactions.json` must be in the current working directory; there is no option to point to a
-  different file.
-- Drug names are matched case sensitively with no normalization.
-- A missing or malformed `interactions.json`, or an unknown severity value, raises an unhandled
-  exception with a traceback rather than a friendly error.
-- Blank input lines produce `No interaction`.
+- Not a clinical decision tool. The dataset covers about 150 drugs and 152 pairs; `No interaction`
+  only means that no record for a pair on the line was found.
+- Unknown drugs (typos, brand names, other separators such as commas) silently give
+  `No interaction`; reporting them on STDERR (and a `--strict` mode) is not implemented.
+- No synonym or brand-name mapping.
+- No provenance, version or checksum is recorded for the dataset.
+- `input.txt` (10,004 lines, 4 distinct lines) is kept for the CI smoke test; use
+  `scripts/gen_input.py` for realistic varied input.
+- Interactions are pairwise only.
 
 ## Releases
 

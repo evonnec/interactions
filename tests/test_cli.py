@@ -1,101 +1,178 @@
-"""End-to-end tests of ``interactions.cli.main`` using a fixture dataset."""
+"""In-process tests of ``interactions.cli.main`` (argument handling, data resolution, errors)."""
 
+import io
+import shutil
+from collections.abc import Callable, Sequence
 from pathlib import Path
 
 import pytest
 
-from tests.conftest import RunCli
+import interactions
+from interactions import cli
+from interactions.data import load_file
+from interactions.model import Interaction
 
-pytestmark = pytest.mark.usefixtures("fixture_dir")
+type Invoke = Callable[..., tuple[int, str, str]]
+
+FOO_BAR = "MODERATE: Foo and bar moderate."
 
 
-class TestMain:
-    @pytest.mark.parametrize(
-        ("line", "expected"),
-        [
-            ("foo bar", "MODERATE: Foo and bar moderate."),
-            ("bar foo", "MODERATE: Foo and bar moderate."),
-            ("foo baz", "MINOR: Foo and baz minor."),
-            ("foo bar baz", "MODERATE: Foo and bar moderate."),  # moderate beats minor
-            ("foo bar qux", "MAJOR: Foo and qux major."),  # major beats moderate
-            ("foo", "No interaction"),
-            ("zzz yyy", "No interaction"),
-            ("Foo Bar", "No interaction"),  # case sensitive
-            ("foo foo bar", "MODERATE: Foo and bar moderate."),  # duplicate tokens
-            ("  foo \t bar  ", "MODERATE: Foo and bar moderate."),  # odd whitespace
-            ("", "No interaction"),  # blank line
-            ("   ", "No interaction"),
-        ],
-    )
-    def test_single_line(self, run_cli: RunCli, line: str, expected: str) -> None:
-        assert run_cli(line + "\n") == [expected]
+@pytest.fixture
+def invoke(monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]) -> Invoke:
+    """Call ``cli.main(argv)`` with STDIN text; return (exit code, stdout, stderr)."""
 
-    def test_one_output_line_per_input_line_in_order(self, run_cli: RunCli) -> None:
-        stdin = "foo bar\nnothing\nfoo baz\n\nfoo qux\n"
-        assert run_cli(stdin) == [
-            "MODERATE: Foo and bar moderate.",
-            "No interaction",
-            "MINOR: Foo and baz minor.",
-            "No interaction",
-            "MAJOR: Foo and qux major.",
-        ]
+    def _invoke(stdin: str, argv: Sequence[str] = ()) -> tuple[int, str, str]:
+        monkeypatch.setattr("sys.stdin", io.StringIO(stdin))
+        code = cli.main(list(argv))
+        captured = capsys.readouterr()
+        return code, captured.out, captured.err
 
-    def test_no_trailing_newline(self, run_cli: RunCli) -> None:
-        assert run_cli("foo bar\nfoo baz") == [
-            "MODERATE: Foo and bar moderate.",
-            "MINOR: Foo and baz minor.",
-        ]
+    return _invoke
 
-    def test_crlf_line_endings(self, run_cli: RunCli) -> None:
-        assert run_cli("foo bar\r\nfoo baz\r\n") == [
-            "MODERATE: Foo and bar moderate.",
-            "MINOR: Foo and baz minor.",
-        ]
 
-    def test_empty_stdin_prints_nothing(self, run_cli: RunCli) -> None:
-        assert run_cli("") == []
+class TestSuccess:
+    def test_prints_one_line_per_input_line(self, invoke: Invoke, mini_data_path: Path) -> None:
+        code, out, err = invoke("foo bar\n\nalpha beta gamma\n", ["--data", str(mini_data_path)])
+        assert (code, err) == (0, "")
+        assert out == f"{FOO_BAR}\nNo interaction\nMAJOR: Alpha and beta major (first).\n"
 
-    def test_prints_nothing_to_stderr(
-        self, run_cli: RunCli, capsys: pytest.CaptureFixture[str]
+    def test_empty_stdin_prints_nothing(self, invoke: Invoke, mini_data_path: Path) -> None:
+        assert invoke("", ["--data", str(mini_data_path)]) == (0, "", "")
+
+    def test_no_trailing_newline_and_crlf(self, invoke: Invoke, mini_data_path: Path) -> None:
+        _, out, _ = invoke("foo bar\r\nfoo bar", ["--data", str(mini_data_path)])
+        assert out == f"{FOO_BAR}\n{FOO_BAR}\n"
+
+    def test_data_is_loaded_once(
+        self, invoke: Invoke, mini_data_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        run_cli("foo bar\n")
-        assert capsys.readouterr().err == ""
+        calls: list[Path] = []
 
-    def test_many_lines(self, run_cli: RunCli) -> None:
-        assert run_cli("foo bar\n" * 500) == ["MODERATE: Foo and bar moderate."] * 500
+        def counting(path: Path) -> list[Interaction]:
+            calls.append(path)
+            return load_file(path)
 
-    def test_20_drugs_per_line(self, run_cli: RunCli) -> None:
-        line = " ".join([f"d{n}" for n in range(18)] + ["foo", "baz"])
-        assert run_cli(line) == ["MINOR: Foo and baz minor."]
+        monkeypatch.setattr(cli, "load_file", counting)
+        invoke("foo bar\n" * 50, ["--data", str(mini_data_path)])
+        assert calls == [mini_data_path]
 
-    def test_missing_interactions_file_raises(
+
+class TestDataResolution:
+    def test_cwd_file_used_when_present(self, invoke: Invoke, mini_data_path: Path) -> None:
+        shutil.copy(mini_data_path, Path("interactions.json"))
+        assert invoke("foo bar\n")[1] == f"{FOO_BAR}\n"
+
+    def test_bundled_data_used_when_no_cwd_file(self, invoke: Invoke) -> None:
+        assert not Path("interactions.json").exists()
+        _, out, err = invoke("sildenafil tamsulosin\n")
+        assert err == ""
+        assert out.startswith("MODERATE: Sildenafil may potentiate")
+
+    def test_data_flag_overrides_cwd_file(self, invoke: Invoke, mini_data_path: Path) -> None:
+        Path("interactions.json").write_text("[]", encoding="utf-8")
+        assert invoke("foo bar\n", ["--data", str(mini_data_path)])[1] == f"{FOO_BAR}\n"
+
+    def test_data_flag_overrides_bundled(self, invoke: Invoke, tmp_path: Path) -> None:
+        other = tmp_path / "other.json"
+        other.write_text(
+            '[{"drugs": ["sildenafil", "tamsulosin"], "severity": "minor",'
+            ' "description": "Mine."}]',
+            encoding="utf-8",
+        )
+        assert invoke("sildenafil tamsulosin\n", ["--data", str(other)])[1] == "MINOR: Mine.\n"
+
+
+class TestInformationalFlags:
+    def test_help_does_not_read_stdin(
+        self, invoke: Invoke, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        code, out, _ = invoke("foo bar\n", ["--help"])
+        assert code == 0
+        assert "usage: interactions" in out
+        assert "--data" in out
+        assert "Exit codes" in out
+
+    def test_version(self, invoke: Invoke) -> None:
+        assert invoke("", ["--version"]) == (0, f"interactions {interactions.__version__}\n", "")
+
+    def test_unknown_flag_is_a_usage_error(self, invoke: Invoke) -> None:
+        code, out, err = invoke("foo bar\n", ["--bogus"])
+        assert (code, out) == (2, "")
+        assert "unrecognized arguments: --bogus" in err
+
+    def test_positional_argument_is_a_usage_error(self, invoke: Invoke) -> None:
+        code, out, err = invoke("", ["input.txt"])
+        assert (code, out) == (2, "")
+        assert "unrecognized arguments: input.txt" in err
+
+    def test_data_flag_requires_a_value(self, invoke: Invoke) -> None:
+        assert invoke("", ["--data"])[0] == 2
+
+
+class TestErrors:
+    def test_missing_data_file(self, invoke: Invoke) -> None:
+        code, out, err = invoke("foo bar\n", ["--data", "other.json"])
+        assert (code, out) == (1, "")
+        assert err == "error: data file not found: other.json\n"
+
+    def test_missing_data_file_detected_with_empty_stdin(self, invoke: Invoke) -> None:
+        assert invoke("", ["--data", "other.json"])[0] == 1
+
+    def test_malformed_json(self, invoke: Invoke) -> None:
+        Path("bad.json").write_text("[{", encoding="utf-8")
+        code, out, err = invoke("foo bar\n", ["--data", "bad.json"])
+        assert (code, out) == (1, "")
+        assert err.startswith("error: bad.json: invalid JSON at line 1 col")
+        assert err.count("\n") == 1
+
+    def test_invalid_record(self, invoke: Invoke) -> None:
+        Path("bad.json").write_text(
+            '[{"drugs": ["a"], "severity": "minor", "description": "d"}]', encoding="utf-8"
+        )
+        code, out, err = invoke("a\n", ["--data", "bad.json"])
+        assert (code, out) == (1, "")
+        assert err == "error: bad.json: record 0: drugs must have exactly 2 distinct names, got 1\n"
+
+    def test_invalid_utf8_on_stdin(
         self,
-        run_cli: RunCli,
-        tmp_path_factory: pytest.TempPathFactory,
         monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture[str],
+        mini_data_path: Path,
     ) -> None:
-        monkeypatch.chdir(tmp_path_factory.mktemp("empty"))
-        with pytest.raises(FileNotFoundError):
-            run_cli("foo bar\n")
+        raw = io.BytesIO(b"foo bar\n\xff\xfe\n")
+        monkeypatch.setattr("sys.stdin", io.TextIOWrapper(raw, encoding="ascii"))
+        code = cli.main(["--data", str(mini_data_path)])
+        err = capsys.readouterr().err
+        assert code == 1
+        assert err.startswith("error: input is not valid UTF-8")
 
-    def test_file_is_read_from_cwd(self, run_cli: RunCli, fixture_dir: Path) -> None:
-        (fixture_dir / "interactions.json").write_text("[]")
-        assert run_cli("foo bar\n") == ["No interaction"]
+
+class TestDuplicatePairsWarning:
+    def test_warns_on_stderr_but_keeps_stdout_clean(self, invoke: Invoke) -> None:
+        Path("dup.json").write_text(
+            '[{"drugs": ["a", "b"], "severity": "minor", "description": "one"},'
+            ' {"drugs": ["b", "a"], "severity": "major", "description": "two"}]',
+            encoding="utf-8",
+        )
+        code, out, err = invoke("a b\n", ["--data", "dup.json"])
+        assert (code, out) == (0, "MAJOR: two\n")
+        assert err == (
+            "warning: duplicate interaction pair a/b: using the most severe, then earliest\n"
+        )
 
 
-class TestTies:
-    def test_first_in_file_is_printed_first(self, run_cli: RunCli) -> None:
-        assert run_cli("alpha beta gamma\n")[0] == "MAJOR: Alpha and beta major (first)."
+class TestBrokenPipe:
+    def test_closed_stdout_exits_quietly(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture[str],
+        mini_data_path: Path,
+    ) -> None:
+        class ClosedPipe(io.StringIO):
+            def write(self, s: str, /) -> int:
+                raise BrokenPipeError
 
-    def test_exactly_one_line_when_top_severity_ties(self, run_cli: RunCli) -> None:
-        assert run_cli("alpha beta gamma\n") == ["MAJOR: Alpha and beta major (first)."]
-
-    def test_ties_do_not_misalign_following_lines(self, run_cli: RunCli) -> None:
-        assert run_cli("alpha beta gamma\nfoo baz\n") == [
-            "MAJOR: Alpha and beta major (first).",
-            "MINOR: Foo and baz minor.",
-        ]
-
-    def test_lower_severity_not_printed_alongside_top(self, run_cli: RunCli) -> None:
-        # alpha+delta is moderate and must not appear next to the major result.
-        assert run_cli("alpha beta delta\n") == ["MAJOR: Alpha and beta major (first)."]
+        monkeypatch.setattr("sys.stdin", io.StringIO("foo bar\n" * 3))
+        monkeypatch.setattr("sys.stdout", ClosedPipe())
+        assert cli.main(["--data", str(mini_data_path)]) == 0
+        assert capsys.readouterr().err == ""
