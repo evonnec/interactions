@@ -105,14 +105,16 @@ so a bad file fails immediately even when STDIN is empty.
 | `0` | Success. Also when the reader of STDOUT closes the pipe early (`\| head -1`), silently. |
 | `1` | Data error (nothing is read from STDIN), invalid input, or a STDIN/STDOUT failure. |
 | `2` | Usage error. |
-| `130` | Interrupted (Ctrl-C), with no traceback. |
+| `130` | Interrupted (Ctrl-C), with no traceback (on POSIX: terminated by SIGINT; shells report 130). |
 
-Ctrl-C always ends the process with exit 130 and nothing on STDERR, also in a pipeline whose reader
-has already gone and also when STDOUT is a full pipe that nobody reads. Results that were not yet
-written to STDOUT at that moment are discarded. The exit code is a plain `130` (not death by
-signal) on every platform. A Ctrl-C in the first milliseconds, while the interpreter itself is
-starting, is outside the program's control: then Python may kill the process by SIGINT or print
-its own traceback.
+Ctrl-C ends the process immediately and silently: no traceback, nothing on STDERR, also in a
+pipeline whose reader has already gone and also when STDOUT is a full pipe that nobody reads. On
+POSIX the process is terminated by SIGINT itself (SIGINT's default action is restored as the first
+thing the program does), so a shell reports exit status 130 (128 + SIGINT) and `subprocess` reports
+-2; on Windows the program exits with plain `130`. Results that were not yet written to STDOUT at
+that moment are discarded. A Ctrl-C during the first milliseconds, while the interpreter itself
+is starting, is outside the program's control: Python may then print its own `KeyboardInterrupt`
+traceback.
 
 Invalid UTF-8 on STDIN is reported as `error: line N: invalid UTF-8` and exits 1. Results are
 streamed, so the output for lines `1..N-1` has already been written (exactly those lines, no more
