@@ -51,8 +51,12 @@ jobs:
       - run: uv run mypy src tests scripts
 
   test:
-    name: Test
-    runs-on: ubuntu-latest
+    name: Test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
     steps:
       - uses: actions/checkout@v7.0.1
       - uses: astral-sh/setup-uv@v10.3.2
@@ -60,17 +64,26 @@ jobs:
           enable-cache: true
           python-version-file: .python-version
       - run: uv sync --locked --all-groups
+      # The coverage gate is the same on every OS: tests that only make sense on POSIX are
+      # skipped on Windows, but the code they cover is also covered by in-process tests.
       - run: uv run pytest --cov=interactions --cov-fail-under=100 --cov-report=term-missing --cov-report=xml
       - uses: actions/upload-artifact@v7.0.2
         with:
-          name: coverage
+          name: coverage-${{ matrix.os }}
           path: coverage.xml
           if-no-files-found: error
 
   build:
-    name: Build and smoke test
+    name: Build and smoke test (${{ matrix.os }})
     needs: [lint, format, typecheck, test]
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    defaults:
+      run:
+        shell: bash
     steps:
       - uses: actions/checkout@v7.0.1
       - uses: astral-sh/setup-uv@v10.3.2
@@ -81,21 +94,27 @@ jobs:
       - run: uv build
       - name: Check wheel contents
         run: |
-          python3 -m zipfile -l dist/*.whl | tee "$RUNNER_TEMP/wheel.txt"
+          uv run python -m zipfile -l dist/*.whl | tee "$RUNNER_TEMP/wheel.txt"
           grep -q 'interactions/data/interactions.json' "$RUNNER_TEMP/wheel.txt"
           ! grep -q 'make_input_file\|gen_input' "$RUNNER_TEMP/wheel.txt"
       - name: Smoke test built wheel from another directory
         run: |
           uv venv "$RUNNER_TEMP/smoke"
           uv pip install --python "$RUNNER_TEMP/smoke" dist/*.whl
+          # the venv's executables live in Scripts/ on Windows and bin/ elsewhere
+          if [ -d "$RUNNER_TEMP/smoke/Scripts" ]; then
+            bin="$RUNNER_TEMP/smoke/Scripts"
+          else
+            bin="$RUNNER_TEMP/smoke/bin"
+          fi
           cp input.txt "$RUNNER_TEMP/input.txt"
           cd "$RUNNER_TEMP"
-          ./smoke/bin/interactions < input.txt > out.txt
+          "$bin/interactions" < input.txt > out.txt
           test "$(wc -l < input.txt)" -eq "$(wc -l < out.txt)"
           head -n 3 out.txt
-          ./smoke/bin/interactions --version
+          "$bin/interactions" --version
       - uses: actions/upload-artifact@v7.0.2
         with:
-          name: dist
+          name: dist-${{ matrix.os }}
           path: dist/
           if-no-files-found: error

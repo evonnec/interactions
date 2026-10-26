@@ -158,6 +158,27 @@ def test_non_ascii_description_is_utf8_regardless_of_locale(tmp_path: Path) -> N
     assert (r.returncode, r.stdout, r.stderr) == (0, "MAJOR: dose ≥ 10 mg\n".encode(), b"")
 
 
+def test_subprocess_stdio_bytes_are_identical_on_every_platform() -> None:
+    """Real child process (runs on Windows too): lone CR never splits, CRLF does, output is LF."""
+    r = run_bytes(b"sildenafil\rtamsulosin\r\nsildenafil tamsulosin\r\n")
+    assert r.returncode == 0
+    assert r.stderr == b""
+    # CR is whitespace inside line 1: one pair (SILD), not two lines; line 2 is the same pair
+    assert r.stdout == (SILD + "\n").encode() * 2
+
+
+def test_subprocess_utf8_output_under_a_legacy_console_code_page(tmp_path: Path) -> None:
+    data = tmp_path / "uni.json"
+    data.write_text(
+        '[{"drugs":["a","b"],"severity":"major","description":"dose \\u2265 10 mg"}]',
+        encoding="utf-8",
+    )
+    env = {**os.environ, "PYTHONIOENCODING": "cp1252", "PYTHONUTF8": "0"}
+    r = run_bytes(b"\xef\xbb\xbfa b\r\nb a\r\n", "--data", str(data), env=env)
+    assert (r.returncode, r.stderr) == (0, b"")
+    assert r.stdout == "MAJOR: dose ≥ 10 mg\nMAJOR: dose ≥ 10 mg\n".encode()
+
+
 # --- #34: invalid UTF-8 mid-stream: exact prefix, named line ----------------------------------
 def test_invalid_utf8_far_into_the_stream_gives_exact_prefix_and_line_number() -> None:
     good = b"sildenafil tamsulosin\n"
@@ -221,6 +242,15 @@ def test_stdout_flush_failure_is_one_error_line(
     monkeypatch.setattr("sys.stdout", FlushFails())
     code, _, err = invoke(monkeypatch, capsys, io.StringIO("a b\n"))
     assert (code, err) == (1, "error: cannot write output: No space left on device\n")
+
+
+def test_errno_counted_as_closed_pipe_is_quiet(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Stands in for Windows, where a write to a closed pipe fails with EINVAL, not EPIPE."""
+    monkeypatch.setattr(cli, "_CLOSED_PIPE_ERRNOS", frozenset({errno.EINVAL}))
+    monkeypatch.setattr("sys.stdout", FailingWriter(OSError(errno.EINVAL, "Invalid argument")))
+    assert invoke(monkeypatch, capsys, io.StringIO("a b\n"))[0::2] == (0, "")
 
 
 def test_broken_pipe_on_flush_is_quiet(
@@ -358,7 +388,11 @@ def test_interacting_pair_beyond_the_20th_drug_is_found() -> None:
 
 
 # --- #37: loader tracebacks -------------------------------------------------------------------
-@pytest.mark.parametrize("text", ["[" * 200_000 + "]" * 200_000, "[" + "1" * 5000 + "]"])
+@pytest.mark.parametrize(
+    "text",
+    ["[" * 200_000 + "]" * 200_000, "[" + "1" * 5000 + "]"],
+    ids=["deeply-nested", "huge-integer"],  # a long id would overflow Windows' env var limit
+)
 def test_pathological_json_is_a_data_error(tmp_path: Path, text: str) -> None:
     path = tmp_path / "bad.json"
     path.write_text(text, encoding="utf-8")
