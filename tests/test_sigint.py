@@ -21,13 +21,22 @@ LINE = b"sildenafil tamsulosin\n"
 KILLED_BY_SIGINT = -signal.SIGINT
 
 
+@pytest.mark.parametrize(
+    ("inherited", "posix_expected"),
+    [
+        (signal.default_int_handler, [(signal.SIGINT, signal.SIG_DFL)]),
+        (signal.SIG_IGN, []),  # issue #56: an ignored SIGINT stays ignored
+    ],
+    ids=["python-default", "inherited-ignore"],
+)
 def test_entry_restores_default_sigint_on_posix_and_maps_import_interrupt_to_130(
-    monkeypatch: pytest.MonkeyPatch,
+    monkeypatch: pytest.MonkeyPatch, inherited: object, posix_expected: list[tuple[int, object]]
 ) -> None:
     installed: list[tuple[int, object]] = []
     monkeypatch.setattr(
         signal, "signal", lambda number, handler: installed.append((number, handler))
     )
+    monkeypatch.setattr(signal, "getsignal", lambda number: inherited)
     real_import = builtins.__import__
 
     def interrupted_import(name: str, *args: object, **kwargs: object) -> object:
@@ -40,11 +49,30 @@ def test_entry_restores_default_sigint_on_posix_and_maps_import_interrupt_to_130
     monkeypatch.setattr(builtins, "__import__", interrupted_import)
     try:
         assert entry() == 130
-        expected = signal.default_int_handler if sys.platform == "win32" else signal.SIG_DFL
-        assert installed == [(signal.SIGINT, expected)]
+        assert installed == ([] if sys.platform == "win32" else posix_expected)
     finally:
         monkeypatch.undo()
         sys.modules.pop("interactions.__main__", None)  # keep runpy tests free of warnings
+
+
+@POSIX_ONLY
+def test_inherited_ignored_sigint_is_respected() -> None:
+    """Issue #56: a background job (``cmd &``, ``trap '' INT``) survives a stray Ctrl-C."""
+    p = subprocess.Popen(
+        CMD,
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        preexec_fn=lambda: signal.signal(signal.SIGINT, signal.SIG_IGN),
+    )
+    try:
+        time.sleep(0.5)  # let the entry point run
+        p.send_signal(signal.SIGINT)
+        out, err = p.communicate(LINE * 3, timeout=60)
+    finally:
+        if p.poll() is None:
+            p.kill()
+    assert (p.returncode, out.count(b"\n"), err) == (0, 3, b"")
 
 
 @POSIX_ONLY

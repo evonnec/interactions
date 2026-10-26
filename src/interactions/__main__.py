@@ -14,10 +14,12 @@ def entry() -> int:
     cannot interrupt on every platform) and a pipeline whose reader has gone. The shell reports
     130 (128 + SIGINT). Nothing needs cleanup: results not yet written are simply dropped. Windows
     keeps Python's handler, and ``KeyboardInterrupt`` is turned into exit 130 here and in ``main``.
+
+    A SIGINT the parent chose to ignore (``cmd &`` in a script, ``nohup``, ``trap '' INT``) is
+    inherited as ``SIG_IGN`` and left alone, so a Ctrl-C meant for another process can't kill us.
     """
-    signal.signal(
-        signal.SIGINT, signal.SIG_DFL if sys.platform != "win32" else signal.default_int_handler
-    )
+    if sys.platform != "win32" and signal.getsignal(signal.SIGINT) is signal.default_int_handler:
+        signal.signal(signal.SIGINT, signal.SIG_DFL)
     try:
         from interactions.cli import main
     except KeyboardInterrupt:
