@@ -4,7 +4,7 @@ import dataclasses
 
 import pytest
 
-from interactions.model import Interaction, Severity, normalize
+from interactions.model import IGNORABLE, Interaction, Severity, normalize
 
 SAMPLE = Interaction(drugs=("a", "b"), severity=Severity.MAJOR, description="A and b.")
 
@@ -58,3 +58,45 @@ class TestNormalize:
     )
     def test_normalize(self, raw: str, expected: str) -> None:
         assert normalize(raw) == expected
+
+
+class TestNormalizeInvisible:
+    """Default-ignorable characters are removed, on the data side and the input side alike (#47)."""
+
+    @pytest.mark.parametrize(
+        "char",
+        [
+            "\u00ad",
+            "\u200b",
+            "\u200c",
+            "\u200d",
+            "\u200f",
+            "\u2060",
+            "\u2064",
+            "\ufe0f",
+            "\ufeff",
+            "\U000e0020",
+            "\U000e0100",
+        ],
+    )
+    def test_removed_anywhere(self, char: str) -> None:
+        assert normalize(f"{char}sil{char}den{char}afil{char}") == "sildenafil"
+
+    def test_every_ignorable_code_point_is_invisible_and_removed(self) -> None:
+        for code in IGNORABLE:
+            assert normalize(f"a{chr(code)}b") == "ab", hex(code)
+
+    def test_only_invisible_characters_normalize_to_empty(self) -> None:
+        assert normalize("\u200b\ufeff\u00ad") == ""
+
+    def test_removal_precedes_composition(self) -> None:
+        assert normalize("e\u034f\u0301") == normalize("\u00e9") == "\u00e9"
+
+    def test_removal_after_nfkc(self) -> None:
+        assert normalize("a\u3164b") == "ab"  # NFKC maps the Hangul filler to another ignorable
+
+    def test_visible_format_characters_are_kept(self) -> None:
+        assert normalize("a\u0600b") == "a\u0600b"
+
+    def test_ascii_is_unchanged(self) -> None:
+        assert normalize(" Sildenafil-X ") == "sildenafil-x"
