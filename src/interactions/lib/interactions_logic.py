@@ -1,53 +1,54 @@
+"""Loading and matching of drug-drug interactions."""
 
 import json
+from collections.abc import Iterable, Set
+from dataclasses import dataclass
+from enum import IntEnum
+from pathlib import Path
+from typing import Any
 
-def load_interactions_from_list(json_list):
-    result = []
-    for item in json_list:
-        drugs = item['drugs']
-        severity = item['severity']
-        description = item['description']
-        new_interaction = Interaction(drugs=drugs, severity=severity, description=description)
-        result.append(new_interaction)
-    return result
+type RawInteraction = dict[str, Any]
+type Drugs = Set[str]
 
-def find_interactions(interactions, drugs):
-    result = []
-    for interaction in interactions:
-        if set(interaction.drugs).issubset(drugs):
-            result.append(interaction)
-    return result
-
-def get_interactions(drugs):
-    with open('interactions.json') as f:
-        json_list = json.load(f)
-    interactions = load_interactions_from_list(json_list)   
-    result = find_interactions(interactions=interactions, drugs=drugs) 
-    return result
+INTERACTIONS_FILE = Path("interactions.json")
 
 
+class Severity(IntEnum):
+    """Interaction severity; a larger value is more severe."""
+
+    MINOR = 1
+    MODERATE = 2
+    MAJOR = 3
+
+    @classmethod
+    def parse(cls, value: str) -> Severity:
+        """Convert a severity string from the JSON file, e.g. ``"major"``."""
+        return cls[value.upper()]
+
+
+@dataclass(frozen=True, slots=True)
 class Interaction:
-    def __init__(self, drugs, severity, description):
-        self.drugs = drugs
-        self.severity = severity
-        self.description = description
-
-    def __eq__(self, other):
-        if self.drugs == other.drugs and self.severity == other.severity and self.description == other.description:
-            return True
-        else:
-            return False
-
-    def __repr__(self):
-        return '<interaction: ' + str(self.drugs) + ', ' + str(self.description) + '>'
-
-    def __lt__(self, other):
-        if self.severity == 'major':
-            return False
-        if other.severity == 'major':
-            return True 
-        if other.severity == 'moderate' and self.severity == 'minor':
-            return True
-        return False
+    drugs: tuple[str, ...]
+    severity: Severity
+    description: str
 
 
+def load_interactions_from_list(json_list: Iterable[RawInteraction]) -> list[Interaction]:
+    return [
+        Interaction(
+            drugs=tuple(item["drugs"]),
+            severity=Severity.parse(item["severity"]),
+            description=item["description"],
+        )
+        for item in json_list
+    ]
+
+
+def find_interactions(interactions: Iterable[Interaction], drugs: Drugs) -> list[Interaction]:
+    return [i for i in interactions if set(i.drugs) <= drugs]
+
+
+def get_interactions(drugs: Drugs) -> list[Interaction]:
+    json_list = json.loads(INTERACTIONS_FILE.read_text())
+    interactions = load_interactions_from_list(json_list)
+    return find_interactions(interactions=interactions, drugs=drugs)

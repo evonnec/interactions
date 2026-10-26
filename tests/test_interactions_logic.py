@@ -1,60 +1,59 @@
-from interactions.lib.interactions_logic import find_interactions, Interaction
+from interactions.lib.interactions_logic import Interaction, Severity, find_interactions
+
+SILDENAFIL_TAMSULOSIN = Interaction(
+    drugs=("sildenafil", "tamsulosin"),
+    severity=Severity.MODERATE,
+    description=(
+        "Sildenafil may potentiate the hypotensive effect of alpha blockers, "
+        "resulting in symptomatic hypotension in some patients."
+    ),
+)
+
 
 class TestFindInteractions:
+    def test_drug_not_found(self) -> None:
+        result = find_interactions(interactions=[], drugs={"acetaminophen"})
+        assert result == []
 
-    def test_drug_not_found(self):
-        interactions = []
-        drugs = set(['acetaminophen'])
-        result = find_interactions(interactions=interactions, drugs=drugs)
-        expected = []
-        assert result == expected
-
-    def test_interaction_found(self):
-        interaction = Interaction(
-            drugs=['sildenafil', 'tamsulosin'],
-            severity='moderate',
-            description="Sildenafil may potentiate the hypotensive effect of alpha blockers, resulting in symptomatic hypotension in some patients.",
+    def test_interaction_found(self) -> None:
+        result = find_interactions(
+            interactions=[SILDENAFIL_TAMSULOSIN], drugs={"sildenafil", "tamsulosin"}
         )
-        interactions = [interaction]
-        drugs = set(['sildenafil', 'tamsulosin'])
-        result = find_interactions(interactions=interactions, drugs=drugs)
-        expected = [interaction]
-        assert result == expected
-    
-    def test_only_one_drug_matches(self):
-        interaction = Interaction(
-            drugs=['sildenafil', 'tamsulosin'],
-            severity='moderate',
-            description="Sildenafil may potentiate the hypotensive effect of alpha blockers, resulting in symptomatic hypotension in some patients.",
-        )
-        interactions = [interaction]
-        drugs = set(['sildenafil'])
-        result = find_interactions(interactions=interactions, drugs=drugs)
-        expected = []
-        assert result == expected
+        assert result == [SILDENAFIL_TAMSULOSIN]
 
-    def test_match_and_others(self):
+    def test_only_one_drug_matches(self) -> None:
+        result = find_interactions(interactions=[SILDENAFIL_TAMSULOSIN], drugs={"sildenafil"})
+        assert result == []
+
+    def test_match_and_others(self) -> None:
         interaction = Interaction(
-            drugs=['foo', 'bar'],
-            severity='moderate',
+            drugs=("foo", "bar"),
+            severity=Severity.MODERATE,
             description="Disaster.",
         )
-        interactions = [interaction]
-        drugs = set(['foo', 'bar', 'baz'])
-        result = find_interactions(interactions=interactions, drugs=drugs)
-        expected = [interaction]
-        assert result == expected
+        result = find_interactions(interactions=[interaction], drugs={"foo", "bar", "baz"})
+        assert result == [interaction]
+
 
 class TestRankSeverity:
+    def test_severity_ordering(self) -> None:
+        assert Severity.MAJOR > Severity.MODERATE > Severity.MINOR
 
-    def test_rank_severity(self):
-        first_major = Interaction(drugs=[], severity='major', description='1 major')
-        first_moderate = Interaction(drugs=[], severity='moderate', description='1 moderate')
-        first_minor = Interaction(drugs=[], severity='minor', description='1 minor')
+    def test_parse(self) -> None:
+        assert Severity.parse("major") is Severity.MAJOR
+        assert Severity.parse("moderate") is Severity.MODERATE
+        assert Severity.parse("minor") is Severity.MINOR
 
-        second_major = Interaction(drugs=[], severity='major', description='2 major')
-        second_moderate = Interaction(drugs=[], severity='moderate', description='2 moderate')
-        second_minor = Interaction(drugs=[], severity='minor', description='2 minor')
+    def test_rank_severity(self) -> None:
+        first_major = Interaction(drugs=(), severity=Severity.MAJOR, description="1 major")
+        first_moderate = Interaction(drugs=(), severity=Severity.MODERATE, description="1 moderate")
+        first_minor = Interaction(drugs=(), severity=Severity.MINOR, description="1 minor")
+
+        second_major = Interaction(drugs=(), severity=Severity.MAJOR, description="2 major")
+        second_moderate = Interaction(
+            drugs=(), severity=Severity.MODERATE, description="2 moderate"
+        )
+        second_minor = Interaction(drugs=(), severity=Severity.MINOR, description="2 minor")
 
         interactions = [
             first_major,
@@ -64,8 +63,9 @@ class TestRankSeverity:
             second_moderate,
             second_minor,
         ]
-        result = sorted(interactions, reverse=True)
-        expected_result = [
+        # Most severe first; ties keep their original (file) order.
+        result = sorted(interactions, key=lambda i: i.severity, reverse=True)
+        assert result == [
             first_major,
             second_major,
             first_moderate,
@@ -73,4 +73,3 @@ class TestRankSeverity:
             first_minor,
             second_minor,
         ]
-        assert result == expected_result
