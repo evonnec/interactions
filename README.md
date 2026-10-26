@@ -120,7 +120,8 @@ thing the program does), so a shell reports exit status 130 (128 + SIGINT) and `
 -2; on Windows the program exits with plain `130`. Results that were not yet written to STDOUT at
 that moment are discarded. A Ctrl-C during the first milliseconds, while the interpreter itself
 is starting, is outside the program's control: Python may then print its own `KeyboardInterrupt`
-traceback.
+traceback. If the parent started the program with SIGINT ignored (a background job `cmd &` in a
+script, `nohup`, or `trap '' INT`), that choice is kept: Ctrl-C does not stop it.
 
 Invalid UTF-8 on STDIN is reported as `error: line N: invalid UTF-8` and exits 1. Results are
 streamed, so the output for lines `1..N-1` has already been written (exactly those lines, no more
