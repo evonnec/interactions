@@ -30,7 +30,7 @@ def random_records(rng: random.Random, vocabulary: list[str], count: int) -> lis
 def random_lines(rng: random.Random, vocabulary: list[str], count: int) -> list[str]:
     lines = []
     for _ in range(count):
-        size = rng.randint(0, 20)
+        size = rng.randint(0, 60)  # beyond the spec's 20: long lines must work too
         tokens = [rng.choice([*vocabulary, "unknown1", "unknown2"]) for _ in range(size)]
         tokens = [t.upper() if rng.random() < 0.2 else t for t in tokens]  # case noise
         separator = rng.choice([" ", "  ", "\t", " \x0c "])

@@ -1,13 +1,13 @@
 """Command line interface: read drug lists from STDIN, print one result line per input line.
 
-Exit codes: 0 success, 1 data or input error, 2 usage error.
+Exit codes: 0 success, 1 data, input or output error, 2 usage error, 130 interrupted (Ctrl-C).
 """
 
 import argparse
 import contextlib
 import os
 import sys
-from collections.abc import Sequence
+from collections.abc import Iterable, Iterator, Sequence
 from pathlib import Path
 from typing import Any
 
@@ -18,6 +18,7 @@ from interactions.index import InteractionIndex, process_lines
 DATA_FILENAME = "interactions.json"
 EXIT_OK = 0
 EXIT_ERROR = 1
+EXIT_INTERRUPTED = 130  # 128 + SIGINT, the shell convention
 
 
 class _VersionAction(argparse.Action):
@@ -48,7 +49,8 @@ def build_parser() -> argparse.ArgumentParser:
         epilog=(
             "The data file is --data if given, else ./interactions.json if it exists in the "
             "current directory, else the dataset bundled with the package. "
-            "Exit codes: 0 success, 1 data or input error, 2 usage error."
+            "Exit codes: 0 success, 1 data, input or output error, 2 usage error, "
+            "130 interrupted."
         ),
     )
     parser.add_argument("--data", metavar="PATH", type=Path, help="interactions JSON file to use")
@@ -67,30 +69,91 @@ def load_index(data: Path | None) -> InteractionIndex:
     return InteractionIndex.build(interactions)
 
 
+class InputError(Exception):
+    """STDIN cannot be read or is not valid UTF-8."""
+
+
 def _silence_stdout() -> None:
     """Point stdout at /dev/null so the interpreter's exit-time flush cannot fail (Python docs)."""
-    with contextlib.suppress(OSError, ValueError):
-        os.dup2(os.open(os.devnull, os.O_WRONLY), sys.stdout.fileno())
+    with contextlib.suppress(OSError, ValueError, AttributeError):  # AttributeError: no stdout
+        devnull = os.open(os.devnull, os.O_WRONLY)
+        try:
+            os.dup2(devnull, sys.stdout.fileno())
+        finally:
+            os.close(devnull)
+
+
+def _checked_lines(stdin: Iterable[str]) -> Iterator[str]:
+    """Yield STDIN lines; raise ``InputError`` at the first line that is not valid UTF-8.
+
+    STDIN is decoded with ``errors="surrogateescape"``: each undecodable byte becomes a lone
+    surrogate, which a valid UTF-8 stream can never contain. Checking per line (instead of letting
+    the decoder fail on a whole 8 KB chunk) makes the failure exact: every line before the bad
+    one has been yielded, and the bad line's number is known.
+    """
+    lines = iter(stdin)
+    number = 0
+    while True:
+        try:
+            line = next(lines)
+        except StopIteration:
+            return
+        except OSError as error:
+            raise InputError(f"cannot read input: {error.strerror or error}") from None
+        number += 1
+        if not line.isascii():
+            try:
+                line.encode("utf-8")
+            except UnicodeEncodeError:
+                raise InputError(f"line {number}: invalid UTF-8") from None
+        yield line
 
 
 def run(index: InteractionIndex) -> int:
-    """Stream STDIN to STDOUT; one output line per input line."""
-    stdin = sys.stdin
-    if hasattr(stdin, "reconfigure"):
-        # utf-8-sig is strict UTF-8 that also drops one BOM at the very start of the stream
-        stdin.reconfigure(encoding="utf-8-sig", errors="strict")
-    try:
-        sys.stdout.writelines(f"{result}\n" for result in process_lines(stdin, index))
-        sys.stdout.flush()
-    except BrokenPipeError:
-        _silence_stdout()
-    except UnicodeDecodeError as error:
-        print(f"error: input is not valid UTF-8: {error.reason}", file=sys.stderr)
+    """Stream STDIN to STDOUT; one output line per input line.
+
+    Both streams are pinned to UTF-8 and ``\\n`` line endings on every platform. If STDIN is
+    invalid on line N, the results for lines 1..N-1 are written first, then the error is reported.
+    """
+    stdin, stdout = sys.stdin, sys.stdout
+    if stdin is None or stdout is None:
+        closed = "stdin" if stdin is None else "stdout"
+        print(f"error: {closed} is closed", file=sys.stderr)
         return EXIT_ERROR
+    if hasattr(stdin, "reconfigure"):
+        # utf-8-sig is UTF-8 that also drops one BOM at the very start of the stream
+        stdin.reconfigure(encoding="utf-8-sig", errors="surrogateescape", newline="\n")
+    if hasattr(stdout, "reconfigure"):
+        stdout.reconfigure(encoding="utf-8", errors="strict", newline="\n")
+    try:
+        stdout.writelines(f"{result}\n" for result in process_lines(_checked_lines(stdin), index))
+    except InputError as error:
+        stdout.flush()  # the results before the bad line come first
+        print(f"error: {error}", file=sys.stderr)
+        return EXIT_ERROR
+    stdout.flush()
     return EXIT_OK
 
 
 def main(argv: Sequence[str] | None = None) -> int:
+    """Run the CLI; never raises for I/O problems (see the exit codes in the module docstring)."""
+    try:
+        code = _main(argv)
+        if sys.stdout is not None:
+            sys.stdout.flush()  # --help/--version output is flushed here, not at interpreter exit
+        return code
+    except BrokenPipeError:  # the reader of STDOUT went away: not an error
+        _silence_stdout()
+        return EXIT_OK
+    except KeyboardInterrupt:
+        return EXIT_INTERRUPTED
+    except OSError as error:
+        _silence_stdout()
+        print(f"error: cannot write output: {error.strerror or error}", file=sys.stderr)
+        return EXIT_ERROR
+
+
+def _main(argv: Sequence[str] | None) -> int:
     parser = build_parser()
     try:
         args = parser.parse_args(argv)

@@ -1,6 +1,7 @@
 """Loading and validating the interactions data file (this module performs the file I/O)."""
 
 import json
+import re
 from importlib.resources import files
 from pathlib import Path
 from typing import Any
@@ -8,6 +9,10 @@ from typing import Any
 from interactions.model import Interaction, Severity, normalize
 
 RECORD_KEYS = frozenset({"drugs", "severity", "description"})
+# Characters that cannot appear in a description: C0/C1 controls except tab (this includes every
+# line break: \n \r \v \f \x1c-\x1e \x85), U+2028/U+2029 and lone surrogates (not encodable as
+# UTF-8). A description is printed verbatim, so a line break would break "one line out per line in".
+UNPRINTABLE = re.compile(r"[\x00-\x08\x0a-\x1f\x7f-\x9f\u2028\u2029\ud800-\udfff]")
 
 
 class DataError(Exception):
@@ -52,6 +57,8 @@ def _parse_record(raw: object) -> Interaction:
     description = record["description"]
     if not isinstance(description, str) or not description.strip():
         raise DataError("description must be a non-empty string")
+    if UNPRINTABLE.search(description):
+        raise DataError("description must be a single line without control characters")
 
     return Interaction(drugs=(first, second), severity=parsed_severity, description=description)
 
@@ -72,7 +79,7 @@ def parse_records(raw: object) -> list[Interaction]:
 def load_file(path: Path) -> list[Interaction]:
     """Read, parse and validate a data file; every failure is reported as ``DataError``."""
     try:
-        text = path.read_text(encoding="utf-8")
+        text = path.read_text(encoding="utf-8-sig")  # tolerate a BOM written by Windows editors
     except FileNotFoundError:
         raise DataError(f"data file not found: {path}") from None
     except UnicodeDecodeError:
@@ -85,6 +92,10 @@ def load_file(path: Path) -> list[Interaction]:
         raise DataError(
             f"{path}: invalid JSON at line {error.lineno} col {error.colno}: {error.msg}"
         ) from None
+    except RecursionError:
+        raise DataError(f"{path}: invalid JSON: nested too deeply") from None
+    except ValueError as error:  # e.g. an integer with more than 4300 digits
+        raise DataError(f"{path}: invalid JSON: {error}") from None
     try:
         return parse_records(raw)
     except DataError as error:
