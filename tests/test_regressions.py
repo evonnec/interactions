@@ -349,8 +349,8 @@ def test_sigint_while_reading_stdin_exits_130_without_traceback() -> None:
         p.kill()
         for stream in (p.stdin, p.stdout, p.stderr):
             stream.close()
-    assert code == 130
-    assert b"Traceback" not in stderr
+    assert code == -signal.SIGINT  # killed by SIGINT; a shell reports 130
+    assert stderr == b""
 
 
 # --- #36: tests that kill the surviving mutants -----------------------------------------------
