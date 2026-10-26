@@ -85,26 +85,11 @@ class TestMain:
 
 class TestTies:
     def test_first_in_file_is_printed_first(self, run_cli: RunCli) -> None:
-        # Pins current ordering; the extra tie lines are covered by the xfail tests below.
         assert run_cli("alpha beta gamma\n")[0] == "MAJOR: Alpha and beta major (first)."
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason=(
-            "spec: each input line must produce exactly one output line "
-            "(current behavior prints every top-severity tie, one per line)"
-        ),
-    )
     def test_exactly_one_line_when_top_severity_ties(self, run_cli: RunCli) -> None:
         assert run_cli("alpha beta gamma\n") == ["MAJOR: Alpha and beta major (first)."]
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason=(
-            "spec: output lines must stay aligned with input lines "
-            "(current behavior prints extra lines for ties, shifting later results)"
-        ),
-    )
     def test_ties_do_not_misalign_following_lines(self, run_cli: RunCli) -> None:
         assert run_cli("alpha beta gamma\nfoo baz\n") == [
             "MAJOR: Alpha and beta major (first).",

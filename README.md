@@ -114,10 +114,6 @@ uv run ruff format --check .                                 # formatting
 uv run mypy src tests                                        # strict type check
 ```
 
-Some tests are marked `xfail(strict=True)`: they encode behavior the specification requires but the
-current implementation does not provide (see Known limitations). When the behavior is fixed they
-will start to pass, and strict mode makes that a failure so the marker gets removed.
-
 ## Design overview
 
 **Data model.** `Severity` is an `IntEnum` (`MINOR=1`, `MODERATE=2`, `MAJOR=3`) so severities
@@ -130,7 +126,9 @@ compare naturally, and its names are the output labels. `Interaction` is a froze
 2. Load `interactions.json` and convert it to `Interaction` objects.
 3. Keep every interaction whose drugs are all present in the line's set (a subset test).
 4. Stable-sort the matches by descending severity, so equal severities keep file order.
-5. Print the top result, or `No interaction` if there are no matches.
+5. Print exactly one line: the first element of that sorted list (the most severe interaction;
+   among equal severities, the one that appears first in `interactions.json`), or
+   `No interaction` if there are no matches.
 
 **Complexity.** With `L` lines, `N` interactions in the file and `D` drugs per line, matching costs
 `O(N * D)` per line after parsing. `interactions.json` is re-read and re-parsed for every input
@@ -142,9 +140,6 @@ drug names on a line are collapsed.
 
 ## Known limitations
 
-- When several interactions tie for the highest severity, every one of them is printed (one per
-  line) instead of only the first in file order, so a line of input can produce more than one line
-  of output. This violates the specification and is covered by `xfail` tests.
 - `interactions.json` is re-read for every input line.
 - `interactions.json` must be in the current working directory; there is no option to point to a
   different file.

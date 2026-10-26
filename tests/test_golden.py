@@ -29,13 +29,6 @@ def test_spec_examples_in_process(run_cli: RunCli) -> None:
 
 
 @pytest.mark.usefixtures("real_dir")
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "spec: exactly one output line per input line (current behavior prints both "
-        "sildenafil+nitroglycerin and sildenafil+lovastatin, which tie at MAJOR)"
-    ),
-)
 def test_real_data_tie_prints_one_line(run_cli: RunCli) -> None:
     assert run_cli("sildenafil nitroglycerin lovastatin\n") == [
         "MAJOR: Phosphodiesterase-5 (PDE5) inhibitors may potentiate the hypotensive "
@@ -69,3 +62,21 @@ def test_subprocess_without_interactions_json_fails(tmp_path: Path) -> None:
     )
     assert result.returncode != 0
     assert "FileNotFoundError" in result.stderr
+
+
+def test_real_input_one_output_line_per_input_line(repo_root: Path) -> None:
+    """Every line of the committed input.txt yields exactly one output line (10,004 -> 10,004)."""
+    input_text = (repo_root / "input.txt").read_text()
+    input_lines = input_text.split("\n")[:-1]
+    result = subprocess.run(
+        [sys.executable, "-c", RUN_MAIN],
+        input=input_text,
+        capture_output=True,
+        text=True,
+        cwd=repo_root,
+        check=False,
+    )
+    assert result.returncode == 0
+    output_lines = result.stdout.split("\n")[:-1]
+    assert len(input_lines) == 10_004
+    assert len(output_lines) == len(input_lines)

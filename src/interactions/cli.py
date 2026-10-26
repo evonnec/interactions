@@ -8,12 +8,10 @@ from interactions.lib.interactions_logic import get_interactions
 def main() -> None:
     for line in sys.stdin.read().splitlines():
         drugs = set(line.split())
-        # sorted() is stable, so ties keep their order from interactions.json.
+        # sorted() is stable, so among equal severities the first in interactions.json is first.
         interactions = sorted(get_interactions(drugs=drugs), key=lambda i: i.severity, reverse=True)
         if not interactions:
             print("No interaction")
             continue
-        top = interactions[0].severity
-        for interaction in interactions:
-            if interaction.severity == top:
-                print(f"{interaction.severity.name}: {interaction.description}")
+        best = interactions[0]
+        print(f"{best.severity.name}: {best.description}")
