@@ -36,6 +36,19 @@ class TestParseRecords:
         (result,) = parse_records([record(drugs=[" Sildenafil ", "TAMSULOSIN"])])
         assert result.drugs == ("sildenafil", "tamsulosin")
 
+    def test_invisible_characters_in_drug_names_are_removed(self) -> None:
+        (result,) = parse_records([record(drugs=["silde\u200bnafil", "\ufefftamsulosin\u00ad"])])
+        assert result.drugs == ("sildenafil", "tamsulosin")
+
+    @pytest.mark.parametrize("name", ["\u200b", "\ufeff\u00ad", " \u2060 "])
+    def test_drug_name_empty_after_normalization_is_rejected(self, name: str) -> None:
+        with pytest.raises(DataError, match="drug names must not be empty"):
+            parse_records([record(drugs=[name, "b"])])
+
+    def test_names_equal_after_removing_invisible_characters_are_not_distinct(self) -> None:
+        with pytest.raises(DataError, match="distinct"):
+            parse_records([record(drugs=["a\u200b", "a"])])
+
     @pytest.mark.parametrize(
         ("raw", "message"),
         [

@@ -220,7 +220,7 @@ class TestExitCodesAndStreams:
 
 
 class TestByteOrderMark:
-    """A leading UTF-8 BOM (issue #31) must not change the output; later ones are not stripped."""
+    """A BOM (issue #31) must not change the output, at the stream start or anywhere else (#47)."""
 
     BOM = b"\xef\xbb\xbf"
 
@@ -244,15 +244,79 @@ class TestByteOrderMark:
             (BOM + b"\n", b"No interaction\n"),  # BOM then a blank line
             (BOM + b" sildenafil tamsulosin\n", None),
             (BOM + b"sildenafil tamsulosin\n", None),
-            # only the first BOM of the stream is dropped; later ones are ordinary characters
-            (b"x\n" + BOM + b"sildenafil tamsulosin\n", b"No interaction\nNo interaction\n"),
-            (BOM + BOM + b"sildenafil tamsulosin\n", b"No interaction\n"),
+            # later BOMs are invisible default-ignorable characters and are removed too (#47)
+            (BOM + BOM + b"sildenafil tamsulosin\n", None),
         ],
     )
-    def test_only_one_leading_bom_is_dropped(self, stdin: bytes, expected: bytes | None) -> None:
+    def test_bom_never_changes_the_result(self, stdin: bytes, expected: bytes | None) -> None:
         result = self.run(stdin)
         assert result.returncode == 0
         if expected is None:
             assert result.stdout.startswith(b"MODERATE: Sildenafil")
         else:
             assert result.stdout == expected
+
+    def test_mid_stream_bom_is_ignored(self) -> None:
+        result = self.run(b"x\n" + self.BOM + b"sildenafil tamsulosin\n")
+        first, second = result.stdout.splitlines()
+        assert first == b"No interaction"
+        assert second.startswith(b"MODERATE: Sildenafil")
+
+    def test_concatenated_bom_files_match_on_every_line(self) -> None:
+        """``cat a.txt b.txt`` where both files start with a BOM: the second BOM is mid-stream."""
+        line = b"sildenafil tamsulosin\n"
+        single = self.run(line)
+        both = self.run(self.BOM + line + self.BOM + line)
+        assert both.stdout == single.stdout * 2
+        assert single.stdout.startswith(b"MODERATE: Sildenafil")
+        assert (both.returncode, both.stderr) == (0, b"")
+
+
+class TestInvisibleCharacters:
+    """Default-ignorable characters never change the result (issue #47)."""
+
+    @pytest.mark.parametrize(
+        "invisible",
+        ["\u200b", "\u200c", "\u200d", "\u200e", "\u2060", "\u00ad", "\ufeff", "\ufe0f", "\u034f"],
+        ids=lambda c: f"U+{ord(c):04X}",
+    )
+    @pytest.mark.parametrize(
+        "template",
+        [
+            "{x}sildenafil tamsulosin",
+            "sildenafil{x} tamsulosin",
+            "silde{x}nafil tamsulosin",
+            "sildenafil {x}tamsulosin",
+            "sildenafil tamsulosin{x}",
+            "sildenafil {x} tamsulosin",
+        ],
+    )
+    def test_invisible_character_is_ignored(
+        self, run_process: RunProcess, invisible: str, template: str
+    ) -> None:
+        expected = run_process("sildenafil tamsulosin\n")
+        result = run_process(template.format(x=invisible) + "\n")
+        assert result.stdout == expected.stdout
+        assert expected.stdout.startswith("MODERATE: Sildenafil")
+        assert (result.returncode, result.stderr) == (0, "")
+
+    def test_invisible_character_inside_a_data_file_drug_name_still_matches(
+        self, run_process: RunProcess, tmp_path: Path
+    ) -> None:
+        data = tmp_path / "data.json"
+        data.write_text(
+            json.dumps(
+                [
+                    {
+                        "drugs": ["silde\u200bnafil", "tamsulosin\u00ad"],
+                        "severity": "major",
+                        "description": "d",
+                    }
+                ]
+            ),
+            encoding="utf-8",
+        )
+        result = run_process(
+            "sildenafil tamsulosin\ntamsu\u2060losin sildenafil\n", "--data", str(data)
+        )
+        assert (result.stdout, result.stderr, result.returncode) == ("MAJOR: d\nMAJOR: d\n", "", 0)

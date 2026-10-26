@@ -100,6 +100,7 @@ class TestParseDrugs:
             ("foo\u2028bar", ["foo", "bar"]),
             ("", []),
             ("   \n", []),
+            ("sil\u200bdenafil \u200b \ufeff tamsulosin\u00ad", ["sildenafil", "tamsulosin"]),
         ],
     )
     def test_parse_drugs(self, line: str, expected: list[str]) -> None:

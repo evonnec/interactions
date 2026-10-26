@@ -71,8 +71,11 @@ class InteractionIndex:
 
 
 def parse_drugs(line: str) -> list[str]:
-    """Split a line on any whitespace and normalize each drug name."""
-    return [normalize(token) for token in line.split()]
+    """Split a line on any whitespace and normalize each drug name.
+
+    A token that is empty after normalization (only invisible characters) is not a drug.
+    """
+    return [name for token in line.split() if (name := normalize(token))]
 
 
 def format_result(interaction: Interaction | None) -> str:

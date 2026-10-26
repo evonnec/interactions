@@ -126,7 +126,15 @@ Every behavioral claim here is covered by a test (`tests/test_contract.py`, `tes
 - **Output format.** `MAJOR: <description>`, `MODERATE: <description>`, `MINOR: <description>`, or
   `No interaction`. A blank or whitespace-only line prints `No interaction`.
 - **Matching is case-insensitive.** Drug names (in the data and on input) are normalized with one
-  function: Unicode NFKC, strip, `casefold()`. `Sildenafil` and `SILDENAFIL` match `sildenafil`.
+  function: remove invisible characters (see below), Unicode NFKC, strip, `casefold()`. `Sildenafil`
+  and `SILDENAFIL` match `sildenafil`.
+- **Invisible characters are ignored.** The Unicode `Default_Ignorable_Code_Point` characters are
+  removed from every drug name, in the data and on input, wherever they appear: U+FEFF (a BOM
+  anywhere in the stream, for example the second file of `cat a.txt b.txt`), U+200B-U+200F (zero
+  width space, ZWNJ, ZWJ, directional marks), U+00AD (soft hyphen), U+2060-U+206F (word joiner),
+  variation selectors, Hangul fillers and similar. They are not whitespace, so they never separate
+  drug names; `silde<U+200B>nafil` is `sildenafil`. A token made only of such characters is not a
+  drug and is ignored. Visible format characters outside that property are kept.
 - **Tokenizing.** Lines are split on newlines only (`\n`, `\r\n`); within a line any whitespace
   (spaces, tabs, form feed, U+2028, ...) separates drug names. Repeated drugs on a line are ignored.
 - **Unknown drugs are ignored.** A drug that is not in the dataset can never produce an
@@ -137,8 +145,7 @@ Every behavioral claim here is covered by a test (`tests/test_contract.py`, `tes
   severity wins, then the earliest in the file. A warning is printed on STDERR.
 - **Input encoding is UTF-8.** Invalid bytes produce `error: line N: invalid UTF-8` and exit 1.
   One UTF-8 byte-order mark at the very start of STDIN (written by Windows Notepad, PowerShell and
-  Excel) is ignored. A U+FEFF anywhere else (for example the second file of `cat a.txt b.txt`) is an
-  ordinary character and stays attached to the drug name next to it.
+  Excel) is ignored, and so is a U+FEFF anywhere else (see "Invisible characters" above).
 - **The spec limits (1-20 drugs per line, up to 10,000 lines) are not enforced.** Longer inputs work;
   per-line cost grows with the square of the number of distinct known drugs on the line.
 
@@ -150,7 +157,8 @@ Every behavioral claim here is covered by a test (`tests/test_contract.py`, `tes
 {"drugs": ["sildenafil", "tamsulosin"], "severity": "moderate", "description": "..."}
 ```
 
-`drugs` must hold two distinct, non-empty names without whitespace (distinct after normalization);
+`drugs` must hold two distinct, non-empty names without whitespace (distinct and non-empty after
+normalization, so a name made only of invisible characters is rejected);
 `severity` is `minor`, `moderate` or `major` (any case); `description` is a non-empty single line: no line breaks or other control characters (tab is
 allowed), because descriptions are printed verbatim and each input line must produce one output
 line. A UTF-8 BOM at the start of the file is accepted.
