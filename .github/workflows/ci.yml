@@ -1,0 +1,101 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: astral-sh/setup-uv@v10.3.2
+        with:
+          enable-cache: true
+          python-version-file: .python-version
+      - run: uv sync --locked --all-groups
+      - run: uv run ruff check --output-format=github .
+
+  format:
+    name: Format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: astral-sh/setup-uv@v10.3.2
+        with:
+          enable-cache: true
+          python-version-file: .python-version
+      - run: uv sync --locked --all-groups
+      - run: uv run ruff format --check .
+
+  typecheck:
+    name: Type check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: astral-sh/setup-uv@v10.3.2
+        with:
+          enable-cache: true
+          python-version-file: .python-version
+      - run: uv sync --locked --all-groups
+      - run: uv run mypy src tests scripts
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: astral-sh/setup-uv@v10.3.2
+        with:
+          enable-cache: true
+          python-version-file: .python-version
+      - run: uv sync --locked --all-groups
+      - run: uv run pytest --cov=interactions --cov-fail-under=100 --cov-report=term-missing --cov-report=xml
+      - uses: actions/upload-artifact@v7.0.2
+        with:
+          name: coverage
+          path: coverage.xml
+          if-no-files-found: error
+
+  build:
+    name: Build and smoke test
+    needs: [lint, format, typecheck, test]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: astral-sh/setup-uv@v10.3.2
+        with:
+          enable-cache: true
+          python-version-file: .python-version
+      - run: uv sync --locked --all-groups
+      - run: uv build
+      - name: Check wheel contents
+        run: |
+          python3 -m zipfile -l dist/*.whl | tee "$RUNNER_TEMP/wheel.txt"
+          grep -q 'interactions/data/interactions.json' "$RUNNER_TEMP/wheel.txt"
+          ! grep -q 'make_input_file\|gen_input' "$RUNNER_TEMP/wheel.txt"
+      - name: Smoke test built wheel from another directory
+        run: |
+          uv venv "$RUNNER_TEMP/smoke"
+          uv pip install --python "$RUNNER_TEMP/smoke" dist/*.whl
+          cp input.txt "$RUNNER_TEMP/input.txt"
+          cd "$RUNNER_TEMP"
+          ./smoke/bin/interactions < input.txt > out.txt
+          test "$(wc -l < input.txt)" -eq "$(wc -l < out.txt)"
+          head -n 3 out.txt
+          ./smoke/bin/interactions --version
+      - uses: actions/upload-artifact@v7.0.2
+        with:
+          name: dist
+          path: dist/
+          if-no-files-found: error
