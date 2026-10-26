@@ -29,9 +29,16 @@ KILLED_BY_SIGINT = -signal.SIGINT
     ],
     ids=["python-default", "inherited-ignore"],
 )
+@pytest.mark.parametrize("posix", [True, False], ids=["posix", "windows"])
 def test_entry_restores_default_sigint_on_posix_and_maps_import_interrupt_to_130(
-    monkeypatch: pytest.MonkeyPatch, inherited: object, posix_expected: list[tuple[int, object]]
+    monkeypatch: pytest.MonkeyPatch,
+    inherited: object,
+    posix_expected: list[tuple[int, object]],
+    posix: bool,
 ) -> None:
+    import interactions.__main__ as entry_module
+
+    monkeypatch.setattr(entry_module, "RESTORE_DEFAULT_SIGINT", posix)
     installed: list[tuple[int, object]] = []
     monkeypatch.setattr(
         signal, "signal", lambda number, handler: installed.append((number, handler))
@@ -44,12 +51,10 @@ def test_entry_restores_default_sigint_on_posix_and_maps_import_interrupt_to_130
             raise KeyboardInterrupt
         return real_import(name, *args, **kwargs)  # type: ignore[arg-type]
 
-    from interactions.__main__ import entry
-
     monkeypatch.setattr(builtins, "__import__", interrupted_import)
     try:
-        assert entry() == 130
-        assert installed == ([] if sys.platform == "win32" else posix_expected)
+        assert entry_module.entry() == 130
+        assert installed == (posix_expected if posix else [])
     finally:
         monkeypatch.undo()
         sys.modules.pop("interactions.__main__", None)  # keep runpy tests free of warnings
