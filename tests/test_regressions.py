@@ -244,6 +244,15 @@ def test_stdout_flush_failure_is_one_error_line(
     assert (code, err) == (1, "error: cannot write output: No space left on device\n")
 
 
+def test_errno_counted_as_closed_pipe_is_quiet(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Stands in for Windows, where a write to a closed pipe fails with EINVAL, not EPIPE."""
+    monkeypatch.setattr(cli, "_CLOSED_PIPE_ERRNOS", frozenset({errno.EINVAL}))
+    monkeypatch.setattr("sys.stdout", FailingWriter(OSError(errno.EINVAL, "Invalid argument")))
+    assert invoke(monkeypatch, capsys, io.StringIO("a b\n"))[0::2] == (0, "")
+
+
 def test_broken_pipe_on_flush_is_quiet(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
@@ -379,7 +388,11 @@ def test_interacting_pair_beyond_the_20th_drug_is_found() -> None:
 
 
 # --- #37: loader tracebacks -------------------------------------------------------------------
-@pytest.mark.parametrize("text", ["[" * 200_000 + "]" * 200_000, "[" + "1" * 5000 + "]"])
+@pytest.mark.parametrize(
+    "text",
+    ["[" * 200_000 + "]" * 200_000, "[" + "1" * 5000 + "]"],
+    ids=["deeply-nested", "huge-integer"],  # a long id would overflow Windows' env var limit
+)
 def test_pathological_json_is_a_data_error(tmp_path: Path, text: str) -> None:
     path = tmp_path / "bad.json"
     path.write_text(text, encoding="utf-8")

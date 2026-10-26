@@ -5,6 +5,7 @@ Exit codes: 0 success, 1 data, input or output error, 2 usage error, 130 interru
 
 import argparse
 import contextlib
+import errno
 import os
 import sys
 from collections.abc import Iterable, Iterator, Sequence
@@ -19,6 +20,10 @@ DATA_FILENAME = "interactions.json"
 EXIT_OK = 0
 EXIT_ERROR = 1
 EXIT_INTERRUPTED = 130  # 128 + SIGINT, the shell convention
+# Windows reports a write to a pipe whose reader has gone (ERROR_NO_DATA) as EINVAL, not EPIPE.
+_CLOSED_PIPE_ERRNOS = frozenset(
+    {errno.EPIPE} | ({errno.EINVAL} if sys.platform == "win32" else set())
+)
 
 
 class _VersionAction(argparse.Action):
@@ -137,6 +142,9 @@ def run(index: InteractionIndex) -> int:
 
 def main(argv: Sequence[str] | None = None) -> int:
     """Run the CLI; never raises for I/O problems (see the exit codes in the module docstring)."""
+    stderr = sys.stderr
+    if hasattr(stderr, "reconfigure"):  # messages are UTF-8 with "\n" endings on every platform
+        stderr.reconfigure(encoding="utf-8", errors="backslashreplace", newline="\n")
     try:
         code = _main(argv)
         if sys.stdout is not None:
@@ -149,6 +157,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return EXIT_INTERRUPTED
     except OSError as error:
         _silence_stdout()
+        if error.errno in _CLOSED_PIPE_ERRNOS:
+            return EXIT_OK
         print(f"error: cannot write output: {error.strerror or error}", file=sys.stderr)
         return EXIT_ERROR
 
