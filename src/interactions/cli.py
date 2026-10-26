@@ -10,7 +10,7 @@ import os
 import sys
 from collections.abc import Iterable, Iterator, Sequence
 from pathlib import Path
-from typing import Any
+from typing import Any, NoReturn
 
 import interactions
 from interactions.data import DataError, load_bundled, load_file
@@ -43,8 +43,20 @@ class _VersionAction(argparse.Action):
         parser.exit()
 
 
+class _Parser(argparse.ArgumentParser):
+    def error(self, message: str) -> NoReturn:
+        """Report a usage error like argparse does, but through ``_diagnostic``.
+
+        argparse prints the usage to ``sys.stderr or sys.stdout``, so with STDERR closed it would
+        land on STDOUT; and a STDERR failure must not change the exit code (2).
+        """
+        _diagnostic(self.format_usage().rstrip("\n"))
+        _diagnostic(f"{self.prog}: error: {message}")
+        raise SystemExit(2)
+
+
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(
+    parser = _Parser(
         prog="interactions",
         description=(
             "Read lines of space-separated drug names from STDIN and print, for each line, the "
@@ -78,14 +90,46 @@ class InputError(Exception):
     """STDIN cannot be read or is not valid UTF-8."""
 
 
-def _silence_stdout() -> None:
-    """Point stdout at /dev/null so the interpreter's exit-time flush cannot fail (Python docs)."""
-    with contextlib.suppress(OSError, ValueError, AttributeError):  # AttributeError: no stdout
+def _silence(stream: object) -> None:
+    """Point a std stream's fd at /dev/null so the interpreter's exit-time flush cannot fail."""
+    with contextlib.suppress(OSError, ValueError, AttributeError):  # AttributeError: no stream
         devnull = os.open(os.devnull, os.O_WRONLY)
         try:
-            os.dup2(devnull, sys.stdout.fileno())
+            os.dup2(devnull, stream.fileno())  # type: ignore[attr-defined]
         finally:
             os.close(devnull)
+
+
+def _silence_stdout() -> None:
+    """Point stdout at /dev/null so the interpreter's exit-time flush cannot fail (Python docs)."""
+    _silence(sys.stdout)
+
+
+def _diagnostic(message: str) -> None:
+    """Write one line to STDERR. Never to STDOUT, and a STDERR failure never changes the outcome.
+
+    ``print(file=sys.stderr)`` would write to STDOUT when STDERR is closed (``sys.stderr`` is
+    ``None``), and would raise, and later fail again at exit, when the STDERR reader has gone.
+    """
+    stream = sys.stderr
+    if stream is None:
+        return
+    try:
+        stream.write(f"{message}\n")
+        stream.flush()
+    except OSError, ValueError:  # broken pipe, full disk, closed file: nowhere to report it
+        _silence(stream)
+
+
+def _make_blocking(stream: object) -> None:
+    """Put an inherited std stream back into blocking mode.
+
+    A parent can leave ``O_NONBLOCK`` on a pipe or terminal it shares with us (the flag belongs to
+    the open file description). Python's buffered reader would then take ``EAGAIN`` for end of
+    input and silently drop the rest of STDIN, and a full STDOUT pipe would fail the write.
+    """
+    with contextlib.suppress(OSError, ValueError, AttributeError):  # no fd, closed, unsupported
+        os.set_blocking(stream.fileno(), True)  # type: ignore[attr-defined]
 
 
 def _checked_lines(stdin: Iterable[str]) -> Iterator[str]:
@@ -123,8 +167,10 @@ def run(index: InteractionIndex) -> int:
     stdin, stdout = sys.stdin, sys.stdout
     if stdin is None or stdout is None:
         closed = "stdin" if stdin is None else "stdout"
-        print(f"error: {closed} is closed", file=sys.stderr)
+        _diagnostic(f"error: {closed} is closed")
         return EXIT_ERROR
+    _make_blocking(stdin)
+    _make_blocking(stdout)
     if hasattr(stdin, "reconfigure"):
         # utf-8-sig is UTF-8 that also drops one BOM at the very start of the stream
         stdin.reconfigure(encoding="utf-8-sig", errors="surrogateescape", newline="\n")
@@ -134,7 +180,7 @@ def run(index: InteractionIndex) -> int:
         stdout.writelines(f"{result}\n" for result in process_lines(_checked_lines(stdin), index))
     except InputError as error:
         stdout.flush()  # the results before the bad line come first
-        print(f"error: {error}", file=sys.stderr)
+        _diagnostic(f"error: {error}")
         return EXIT_ERROR
     stdout.flush()
     return EXIT_OK
@@ -163,7 +209,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         _silence_stdout()
         if error.errno in _CLOSED_PIPE_ERRNOS:
             return EXIT_OK
-        print(f"error: cannot write output: {error.strerror or error}", file=sys.stderr)
+        _diagnostic(f"error: cannot write output: {error.strerror or error}")
         return EXIT_ERROR
 
 
@@ -176,13 +222,12 @@ def _main(argv: Sequence[str] | None) -> int:
     try:
         index = load_index(args.data)  # eager: a bad data file fails before STDIN is read
     except DataError as error:
-        print(f"error: {error}", file=sys.stderr)
+        _diagnostic(f"error: {error}")
         return EXIT_ERROR
     for first, second in index.duplicates:
-        print(
+        _diagnostic(
             f"warning: duplicate interaction pair {first}/{second}: "
-            "using the most severe, then earliest",
-            file=sys.stderr,
+            "using the most severe, then earliest"
         )
     return run(index)
 

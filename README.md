@@ -95,7 +95,13 @@ so a bad file fails immediately even when STDIN is empty.
 - **STDOUT** carries results only, as UTF-8 with `\n` line endings on every platform and locale
   (it is pinned, not inherited from `LANG`, `PYTHONIOENCODING` or the Windows code page).
 - **STDERR** carries one `error: ...` line for a failure, plus `warning: ...` lines for duplicate
-  data pairs. Never a traceback for an input, data or I/O problem.
+  data pairs. Never a traceback for an input, data or I/O problem. Diagnostics are never written
+  to STDOUT: if STDERR is closed they are dropped, and if STDERR is a pipe whose reader has gone the
+  exit code is still the documented one (1 or 2), not an interpreter-level failure.
+- **Blocking mode.** At startup STDIN and STDOUT are put into blocking mode (POSIX), because a parent
+  can leave `O_NONBLOCK` on a shared pipe; otherwise the end of the available data would be taken
+  for end of input and the rest of STDIN silently dropped. This changes the flag on the shared open
+  file description.
 - **STDIN** is read as UTF-8 with `\n` as the only line separator on every platform (a lone `\r`
   does not split a line). Output is written in blocks when STDOUT is a pipe or a file, so results
   can appear after the input ends rather than line by line; that is not a guarantee either way.
@@ -237,6 +243,9 @@ uv run python scripts/gen_input.py --lines 10000 --seed 1 > big_input.txt
   `--help` that must not wait on an open STDIN.
 - `tests/test_sigint.py` covers Ctrl-C: in a pipeline, with a full STDOUT pipe, repeated, and during
   start-up (POSIX subprocess tests plus an in-process entry-point test).
+- `tests/test_stdio_edge.py` covers a closed or broken STDERR, inherited `O_NONBLOCK` pipes, the
+  ordering of results and the error message, and write failures (mocked streams plus
+  `RLIMIT_FSIZE`, so they also run on macOS).
 - Coverage is 100% and CI fails below that.
 
 ## Limitations and future work
