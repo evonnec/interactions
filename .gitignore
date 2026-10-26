@@ -131,3 +131,10 @@ dmypy.json
 # IDE + OS
 .DS_Store
 *.DS_Store
+/interactions/
+# Packaging / test caches
+*.egg-info/
+.pytest_cache/
+__pycache__/
+.ruff_cache/
+.claude/
