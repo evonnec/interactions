@@ -4,7 +4,7 @@ build-backend = "uv_build"
 
 [project]
 name = "interactions"
-version = "0.2.0"
+version = "0.2.1"
 description = "Command line tool that reports the most severe drug-drug interaction for each line of input"
 readme = "README.md"
 license = "GPL-3.0-or-later"
